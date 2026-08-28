@@ -1,98 +1,104 @@
 # SoundViz
 
-原生 macOS 菜单栏音频可视化工具。SoundViz 使用 Core Audio Process Tap 读取系统输出音频，在本地进行 FFT 分析，并渲染实时频谱和节奏脉冲。音频数据只在内存中处理，不会录制、保存、上传或播放。
+[English](./README.md) | [简体中文](./README.zh-CN.md)
 
-## 功能
+SoundViz is a native macOS menu bar audio visualizer. It reads system output audio through a Core Audio Process Tap, performs FFT analysis locally, and renders live spectral motion and beat pulses. Audio is processed in memory only; SoundViz does not record, save, upload, or play it.
 
-- 柱状频谱、波形线、频谱带三种可视化样式。
-- 12 段对数频谱，逐频段自适应归一化。
-- 低频 spectral flux 节拍脉冲。
-- 独立 30 fps 渲染时钟。
-- 样式选择自动保存。
-- 菜单栏状态、启动/停止和退出控制。
+## Features
 
-## 构建与运行
+- Three visualization styles: spectrum bars, waveform line, and spectrum area.
+- 12 logarithmic frequency bands with per-band adaptive normalization.
+- Low-frequency spectral-flux beat pulses.
+- Independent 30 fps rendering clock.
+- Automatic persistence of the selected style.
+- Menu bar status, start/stop controls, and quit action.
+
+## Build and Run
 
 ```bash
 ./build-app.sh
 open build/SoundViz.app
 ```
 
-也可以使用 Makefile：
+Or use the Makefile:
 
 ```bash
 make run
 ```
 
-## 开发
+## Development
 
 ```bash
-swift test          # 运行测试
-make icon           # 重新生成应用图标
-make build          # 构建并打包 app bundle
-make verify         # 测试、打包并校验 bundle
-make clean          # 清理构建产物
+swift test          # Run tests
+make icon           # Regenerate the app icon
+make build          # Build and package the app bundle
+make verify         # Test, package, and validate the bundle
+make clean          # Remove build artifacts
 ```
 
-CI 使用 GitHub Actions 的 `macos-15` runner 执行测试、打包和 bundle 校验。
+CI uses a GitHub Actions `macos-15` runner to test, package, and validate the app bundle.
 
-## 权限
+## Permissions
 
-SoundViz 不使用屏幕录制权限，因此不会显示紫色屏幕捕获指示器。它要求 macOS 14.2 或更高版本，并需要授权 SoundViz 读取系统音频；该授权可能显示在“系统设置 → 隐私与安全性 → 麦克风/音频捕获”下。
+SoundViz does not use Screen Recording permission, so it does not show the purple screen-capture indicator. It requires macOS 14.2 or later and permission to read system audio. macOS may show this under **System Settings → Privacy & Security → Microphone/Audio Capture**.
 
-## 可视化样式
+## Visualization Styles
 
-| 样式 | 菜单栏效果 | 说明 |
+| Style | Menu bar effect | Description |
 | --- | --- | --- |
-| 柱状频谱 | ![柱状频谱](docs/images/visualization-bars.png) | 12 段对数频谱柱，低频在左、高频在右。 |
-| 波形线 | ![波形线](docs/images/visualization-waveform.png) | 时间域波形曲线，经去直流和滚动峰值归一化。 |
-| 频谱带 | ![频谱带](docs/images/visualization-spectrum-area.png) | 平滑频谱区域，低频节拍会带动边缘脉冲。 |
+| Spectrum bars | ![Spectrum bars](docs/images/visualization-bars.png) | 12 logarithmic frequency bands; low frequencies are on the left and high frequencies on the right. |
+| Waveform line | ![Waveform line](docs/images/visualization-waveform.png) | A time-domain waveform curve with DC offset removal and rolling peak normalization. |
+| Spectrum area | ![Spectrum area](docs/images/visualization-spectrum-area.png) | A smooth spectral area where low-frequency beats drive edge pulses. |
 
-样式可在菜单栏的“可视化样式”中切换，选择会自动保存。
+Switch styles from the **Visualization Style** menu. The selection is saved automatically.
 
-## 架构
+## Architecture
 
 ```text
 Core Audio Process Tap
         ↓
 SystemAudioCaptureController
         ↓
-SpectrumAnalyzer（FFT / 频段 / onset）
+SpectrumAnalyzer (FFT / bands / onset)
         ↓
-AudioVisualizer（样式渲染）
+AudioVisualizer (style rendering)
         ↓
 NSStatusItem
 ```
 
-主要源码位于 `Sources/SoundViz`。
+The main source code is in `Sources/SoundViz`.
 
-## 打包与签名
+## Packaging and Signing
 
-默认使用 ad-hoc 签名，适合本机原型验证：
+The default build uses ad-hoc signing, which is suitable for local prototype use:
 
 ```bash
 ./build-app.sh
 ```
 
-如需使用 Developer ID 签名：
+To sign with a Developer ID certificate:
 
 ```bash
 CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAM_ID)" ./build-app.sh
 ```
 
-分发到其他 Mac 前仍需要公证；当前仓库未包含公证流程。
+Distribution to other Macs still requires notarization; this repository does not include a notarization workflow.
 
-## 当前行为
+## Runtime Behavior
 
-- 启动后自动开始监听。
-- 菜单栏显示 12 段频谱或时间域波形。
-- 可视化样式支持柱状频谱、波形线和频谱带，选择会自动保存。
-- 菜单提供启动/停止、权限状态和退出。
-- 应用本身不录制、保存或播放音频。
+- Listening starts automatically when the app launches.
+- The menu bar shows 12 spectral bands or a time-domain waveform.
+- Visualization style can be switched between spectrum bars, waveform line, and spectrum area.
+- The menu provides start/stop controls, permission status, and quit.
+- The app itself does not record, save, or play audio.
 
-## 已知原型限制
+## Limitations
 
-- 依赖 macOS 14.2+ 与 Core Audio Process Tap。
-- 未做 Developer ID 签名和公证。
-- Core Audio Tap 的系统授权行为可能随 macOS 版本变化。
-- 未包含沙盒、Developer ID 公证和 Sparkle 自动更新。
+- Requires macOS 14.2+ and Core Audio Process Tap.
+- Developer ID signing and notarization are not configured.
+- Core Audio Tap authorization behavior may vary across macOS releases.
+- Sandbox, Developer ID notarization, and Sparkle updates are not included.
+
+## License
+
+This project is available under the [MIT License](LICENSE).
