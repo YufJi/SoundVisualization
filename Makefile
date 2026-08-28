@@ -1,4 +1,7 @@
-.PHONY: build run test verify clean
+.PHONY: build run icon test verify clean
+
+icon:
+	./scripts/make-icon.sh
 
 build:
 	./build-app.sh
@@ -14,4 +17,3 @@ verify: test build
 clean:
 	swift package clean
 	rm -rf build
-

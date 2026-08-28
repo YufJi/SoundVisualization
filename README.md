@@ -28,6 +28,7 @@ make run
 
 ```bash
 swift test          # 运行测试
+make icon           # 重新生成应用图标
 make build          # 构建并打包 app bundle
 make verify         # 测试、打包并校验 bundle
 make clean          # 清理构建产物
