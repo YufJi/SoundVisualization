@@ -128,7 +128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshStyleMenu() {
         for item in styleMenuItems {
             let style = VisualizationStyle(rawValue: item.representedObject as? String ?? "")
-            item.state = style == visualizer.style ? .on : .off
+            item.state = style == settings.style ? .on : .off
         }
     }
 }
