@@ -13,7 +13,7 @@ final class AudioVisualizer {
     private var renderTimer: Timer?
     var onUpdate: ((NSImage) -> Void)?
 
-    init(style: VisualizationStyle = .bars) {
+    init(style: VisualizationStyle) {
         self.style = style
         targetBands = [Float](repeating: 0, count: barCount)
         displayedBands = [CGFloat](repeating: 0, count: barCount)

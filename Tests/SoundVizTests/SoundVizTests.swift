@@ -28,4 +28,71 @@ final class SoundVizTests: XCTestCase {
         XCTAssertTrue(firstFrame.waveform.allSatisfy { $0.isFinite })
         XCTAssertTrue(secondFrame.waveform.allSatisfy { $0.isFinite })
     }
+
+    func testDefaultVisualizationSettingsUseAgreedBaseline() {
+        let settings = VisualizationSettings.default
+
+        XCTAssertEqual(settings.style, .bars)
+        XCTAssertEqual(settings.bandPreset, .twelve)
+        XCTAssertEqual(settings.motionResponsePreset, .balanced)
+        XCTAssertEqual(settings.beatPulseIntensity, .normal)
+        XCTAssertTrue(settings.sceneAdaptationEnabled)
+        XCTAssertEqual(settings.renderingCadence, .standard)
+    }
+
+    func testSettingsStoreRoundTripsSavedSettings() {
+        let temporaryDefaults = makeTemporaryDefaults()
+        let store = UserDefaultsSettingsStore(defaults: temporaryDefaults)
+        var settings = VisualizationSettings.default
+        settings.style = .spectrumArea
+        settings.bandPreset = .sixteen
+        settings.motionResponsePreset = .smooth
+        settings.beatPulseIntensity = .off
+        settings.sceneAdaptationEnabled = false
+        settings.renderingCadence = .high
+
+        store.save(settings)
+        let loaded = store.load()
+
+        XCTAssertEqual(loaded, settings)
+    }
+
+    func testSettingsStoreMigratesLegacyRememberedStyle() {
+        let temporaryDefaults = makeTemporaryDefaults()
+        temporaryDefaults.set("spectrumArea", forKey: UserDefaultsSettingsStore.legacyStyleKey)
+        let store = UserDefaultsSettingsStore(defaults: temporaryDefaults)
+
+        let settings = store.load()
+
+        XCTAssertEqual(settings.style, .spectrumArea)
+        XCTAssertEqual(settings.bandPreset, VisualizationSettings.default.bandPreset)
+        XCTAssertEqual(settings.motionResponsePreset, VisualizationSettings.default.motionResponsePreset)
+        XCTAssertEqual(settings.beatPulseIntensity, VisualizationSettings.default.beatPulseIntensity)
+        XCTAssertEqual(settings.sceneAdaptationEnabled, VisualizationSettings.default.sceneAdaptationEnabled)
+        XCTAssertEqual(settings.renderingCadence, VisualizationSettings.default.renderingCadence)
+        XCTAssertNotNil(temporaryDefaults.data(forKey: UserDefaultsSettingsStore.settingsKey))
+        XCTAssertNil(temporaryDefaults.string(forKey: UserDefaultsSettingsStore.legacyStyleKey))
+    }
+
+    func testSettingsStoreRestoreDefaultsReplacesSavedSettings() {
+        let temporaryDefaults = makeTemporaryDefaults()
+        let store = UserDefaultsSettingsStore(defaults: temporaryDefaults)
+        var settings = VisualizationSettings.default
+        settings.style = .waveform
+        settings.bandPreset = .twentyFour
+        settings.renderingCadence = .high
+        store.save(settings)
+
+        let restored = store.restoreDefaults()
+
+        XCTAssertEqual(restored, VisualizationSettings.default)
+        XCTAssertEqual(store.load(), VisualizationSettings.default)
+    }
+
+    private func makeTemporaryDefaults() -> UserDefaults {
+        let suiteName = "SoundVizTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        return defaults
+    }
 }

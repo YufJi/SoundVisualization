@@ -2,17 +2,28 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
-    private var visualizer = AudioVisualizer()
+    private var visualizer: AudioVisualizer
+    private var settings: VisualizationSettings
+    private var settingsStore: VisualizationSettingsStoring
     private var captureController: CaptureControlling?
     private var menu: NSMenu?
     private var statusMenuItem: NSMenuItem?
     private var toggleMenuItem: NSMenuItem?
     private var styleMenuItems: [NSMenuItem] = []
 
+    init(
+        visualizer: AudioVisualizer,
+        settings: VisualizationSettings,
+        settingsStore: VisualizationSettingsStoring
+    ) {
+        self.visualizer = visualizer
+        self.settings = settings
+        self.settingsStore = settingsStore
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         let item = NSStatusBar.system.statusItem(withLength: 46)
         statusItem = item
-        restoreVisualizationStyle()
         configureMenu()
         item.button?.image = visualizer.image
         visualizer.onUpdate = { [weak self] image in
@@ -108,15 +119,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func changeVisualizationStyle(_ sender: NSMenuItem) {
         guard let rawValue = sender.representedObject as? String,
               let style = VisualizationStyle(rawValue: rawValue) else { return }
+        settings.style = style
+        settingsStore.save(settings)
         visualizer.setStyle(style)
-        UserDefaults.standard.set(rawValue, forKey: "visualizationStyle")
         refreshStyleMenu()
-    }
-
-    private func restoreVisualizationStyle() {
-        guard let rawValue = UserDefaults.standard.string(forKey: "visualizationStyle"),
-              let style = VisualizationStyle(rawValue: rawValue) else { return }
-        visualizer.setStyle(style)
     }
 
     private func refreshStyleMenu() {

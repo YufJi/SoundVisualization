@@ -1,6 +1,6 @@
 import Foundation
 
-enum VisualizationStyle: String, CaseIterable {
+enum VisualizationStyle: String, CaseIterable, Codable {
     case bars
     case waveform
     case spectrumArea
