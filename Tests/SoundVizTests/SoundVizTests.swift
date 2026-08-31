@@ -40,7 +40,23 @@ final class SoundVizTests: XCTestCase {
 
             XCTAssertEqual(frame.bands.count, preset.rawValue)
             XCTAssertTrue(frame.bands.allSatisfy { $0.isFinite && $0 >= 0 })
+            let secondFrame = analyzer.process(samples: samples, timestamp: 0.01)
+            XCTAssertEqual(secondFrame.bands.count, preset.rawValue)
+            XCTAssertTrue(secondFrame.bands.allSatisfy { $0.isFinite && $0 >= 0 })
         }
+    }
+
+    func testBandPresetPersistsWithWaveformStyle() throws {
+        let temporaryDefaults = makeTemporaryDefaults()
+        let store = UserDefaultsSettingsStore(defaults: temporaryDefaults)
+        var settings = VisualizationSettings.default
+        settings.style = .waveform
+        settings.bandPreset = .twentyFour
+
+        store.save(settings)
+
+        XCTAssertEqual(store.load(), settings)
+        XCTAssertEqual(store.load().bandPreset, .twentyFour)
     }
 
     func testAudioVisualizerAdoptsUpdatedBandCount() {

@@ -60,14 +60,14 @@ final class AudioVisualizer {
         image.lockFocusFlipped(false)
         NSColor.labelColor.withAlphaComponent(0.9).setFill()
 
-        let barWidth: CGFloat = 2
-        let spacing: CGFloat = 1.2
         let centerY = size.height / 2
         for index in 0..<bandCount {
-            let pulseWeight = 0.28 / (CGFloat(index) + 1.25)
+            let slotWidth = (size.width - 2) / CGFloat(bandCount)
+            let barWidth = min(2, slotWidth * 0.65)
+            let pulseWeight = pulseWeight(for: index)
             let band = min(1, displayedBands[index] + displayedBeat * pulseWeight)
             let height = max(2, min(size.height - 2, band * (size.height - 2)))
-            let x = CGFloat(index) * (barWidth + spacing) + 1
+            let x = 1 + CGFloat(index) * slotWidth + (slotWidth - barWidth) / 2
             let rect = NSRect(x: x, y: centerY - height / 2, width: barWidth, height: height)
             NSBezierPath(roundedRect: rect, xRadius: 1, yRadius: 1).fill()
         }
@@ -110,7 +110,7 @@ final class AudioVisualizer {
         let baseline: CGFloat = 2
         let availableHeight = size.height - 4
         let points = (0..<bandCount).map { index in
-            let pulseWeight = 0.22 / (CGFloat(index) + 1.35)
+            let pulseWeight = pulseWeight(for: index) * 0.8
             let band = min(1, displayedBands[index] + displayedBeat * pulseWeight)
             return NSPoint(
                 x: 2 + CGFloat(index) / CGFloat(bandCount - 1) * (size.width - 4),
@@ -165,6 +165,10 @@ final class AudioVisualizer {
             )
             path.curve(to: next, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
         }
+    }
+
+    private func pulseWeight(for index: Int) -> CGFloat {
+        0.28 / (CGFloat(index) + 1.25)
     }
 
     func push(spectrum: SpectrumFrame) {

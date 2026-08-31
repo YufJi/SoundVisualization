@@ -94,10 +94,7 @@ final class SystemAudioCaptureController: CaptureControlling {
         self.tapID = tapID
         let format = try tapFormat(tapID)
         tapFormat = format
-        spectrumAnalyzer = SpectrumAnalyzer(
-            requestedSampleRate: Float(format.mSampleRate),
-            requestedBandCount: bandPreset.rawValue
-        )
+        spectrumAnalyzer = makeAnalyzer(sampleRate: Float(format.mSampleRate))
 
         let tap: [String: Any] = [
             "uid": description.uuid.uuidString,
@@ -152,8 +149,12 @@ final class SystemAudioCaptureController: CaptureControlling {
 
     private func recreateAnalyzer() {
         guard let tapFormat else { return }
-        spectrumAnalyzer = SpectrumAnalyzer(
-            requestedSampleRate: Float(tapFormat.mSampleRate),
+        spectrumAnalyzer = makeAnalyzer(sampleRate: Float(tapFormat.mSampleRate))
+    }
+
+    private func makeAnalyzer(sampleRate: Float) -> SpectrumAnalyzer {
+        SpectrumAnalyzer(
+            requestedSampleRate: sampleRate,
             requestedBandCount: bandPreset.rawValue
         )
     }
