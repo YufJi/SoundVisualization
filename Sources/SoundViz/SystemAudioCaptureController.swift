@@ -166,7 +166,8 @@ final class SystemAudioCaptureController: CaptureControlling {
     private func makeAnalyzer(sampleRate: Float) -> SpectrumAnalyzer {
         SpectrumAnalyzer(
             requestedSampleRate: sampleRate,
-            requestedBandCount: bandPreset.rawValue
+            requestedBandCount: bandPreset.rawValue,
+            motionResponsePreset: motionResponsePreset
         )
     }
 

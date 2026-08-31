@@ -43,6 +43,10 @@ final class SoundVizTests: XCTestCase {
             let secondFrame = analyzer.process(samples: samples, timestamp: 0.01)
             XCTAssertEqual(secondFrame.bands.count, preset.rawValue)
             XCTAssertTrue(secondFrame.bands.allSatisfy { $0.isFinite && $0 >= 0 })
+            XCTAssertTrue(frame.waveform.allSatisfy { $0.isFinite })
+            XCTAssertTrue(frame.beat.isFinite && frame.beat >= 0)
+            XCTAssertTrue(secondFrame.waveform.allSatisfy { $0.isFinite })
+            XCTAssertTrue(secondFrame.beat.isFinite && secondFrame.beat >= 0)
         }
     }
 

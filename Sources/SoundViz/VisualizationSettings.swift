@@ -16,13 +16,6 @@ enum BandPreset: Int, CaseIterable, Codable {
 
 }
 
-struct MotionResponseParameters: Equatable {
-    let bandAttack: Float
-    let bandDecay: Float
-    let waveformSmoothing: Float
-    let beatDecay: Float
-}
-
 enum MotionResponsePreset: String, CaseIterable, Codable {
     case snappy
     case balanced

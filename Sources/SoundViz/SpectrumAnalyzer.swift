@@ -152,12 +152,12 @@ final class SpectrumAnalyzer {
 
     private func updateEnvelopes(with normalizedBands: [Float]) {
         for index in 0..<bandCount {
-        let target = normalizedBands[index]
-        let current = bandEnvelopes[index]
-        let blend = target > current
-            ? motionResponseParameters.bandAttack
-            : motionResponseParameters.bandDecay
-        bandEnvelopes[index] = current + (target - current) * blend
+            let target = normalizedBands[index]
+            let current = bandEnvelopes[index]
+            let blend = target > current
+                ? motionResponseParameters.bandAttack
+                : motionResponseParameters.bandDecay
+            bandEnvelopes[index] = current + (target - current) * blend
         }
     }
 
