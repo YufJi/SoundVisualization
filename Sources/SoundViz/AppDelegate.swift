@@ -4,8 +4,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var visualizer: AudioVisualizer
-    private var settings: VisualizationSettings
-    private var settingsStore: VisualizationSettingsStoring
+    private let settingsModel: VisualizationSettingsModel
     private var captureController: CaptureControlling?
     private var menu: NSMenu?
     private var statusMenuItem: NSMenuItem?
@@ -15,12 +14,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     init(
         visualizer: AudioVisualizer,
-        settings: VisualizationSettings,
-        settingsStore: VisualizationSettingsStoring
+        settingsModel: VisualizationSettingsModel
     ) {
         self.visualizer = visualizer
-        self.settings = settings
-        self.settingsStore = settingsStore
+        self.settingsModel = settingsModel
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -129,10 +126,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func changeVisualizationStyle(_ sender: NSMenuItem) {
         guard let rawValue = sender.representedObject as? String,
               let style = VisualizationStyle(rawValue: rawValue) else { return }
+        var settings = settingsModel.settings
         settings.style = style
-        settingsStore.save(settings)
-        visualizer.setStyle(style)
-        refreshStyleMenu()
+        settingsModel.update(settings)
     }
 
     @objc private func openSettings() {
@@ -141,24 +137,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let settingsBinding = Binding<VisualizationSettings>(
-            get: { [weak self] in self?.settings ?? .default },
-            set: { [weak self] newSettings in self?.applySettings(newSettings) }
-        )
         let controller = SettingsWindowController(
-            settings: settingsBinding,
+            model: settingsModel,
             onRestoreDefaults: { [weak self] in
                 guard let self else { return }
-                self.applySettings(self.settingsStore.restoreDefaults())
+                self.settingsModel.restoreDefaults()
             }
         )
         settingsWindowController = controller
         controller.showAndFocus()
     }
 
-    private func applySettings(_ newSettings: VisualizationSettings) {
-        settings = newSettings
-        settingsStore.save(newSettings)
+    func applyVisualSettings(_ newSettings: VisualizationSettings) {
         if newSettings.style != visualizer.style {
             visualizer.setStyle(newSettings.style)
         }
@@ -168,7 +158,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshStyleMenu() {
         for item in styleMenuItems {
             let style = VisualizationStyle(rawValue: item.representedObject as? String ?? "")
-            item.state = style == settings.style ? .on : .off
+            item.state = style == settingsModel.settings.style ? .on : .off
         }
     }
 }

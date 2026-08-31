@@ -11,6 +11,7 @@ SoundViz is a native macOS menu bar audio visualizer. It reads system output aud
 - Low-frequency spectral-flux beat pulses.
 - Independent 30 fps rendering clock.
 - Automatic persistence of the selected style.
+- A single-instance settings window for visualization preferences.
 - Menu bar status, start/stop controls, and quit action.
 
 ## Build and Run
@@ -50,7 +51,7 @@ SoundViz does not use Screen Recording permission, so it does not show the purpl
 | Waveform line | ![Waveform line](docs/images/visualization-waveform.png) | A time-domain waveform curve with DC offset removal and rolling peak normalization. |
 | Spectrum area | ![Spectrum area](docs/images/visualization-spectrum-area.png) | A smooth spectral area where low-frequency beats drive edge pulses. |
 
-Switch styles from the **Visualization Style** menu. The selection is saved automatically.
+Switch styles from the **Visualization Style** menu, or open **Settings…** to adjust visualization preferences. Changes apply immediately and are saved automatically.
 
 ## Architecture
 

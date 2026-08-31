@@ -89,6 +89,42 @@ final class SoundVizTests: XCTestCase {
         XCTAssertEqual(store.load(), VisualizationSettings.default)
     }
 
+    func testSettingsModelUpdatePersistsAndNotifies() throws {
+        let temporaryDefaults = makeTemporaryDefaults()
+        let store = UserDefaultsSettingsStore(defaults: temporaryDefaults)
+        let model = VisualizationSettingsModel(settings: .default, store: store)
+        var publishedSettings: [VisualizationSettings] = []
+        var changedSettings: [VisualizationSettings] = []
+        let cancellable = model.$settings.dropFirst().sink { publishedSettings.append($0) }
+        model.onChange = { changedSettings.append($0) }
+        var settings = VisualizationSettings.default
+        settings.bandPreset = .sixteen
+
+        model.update(settings)
+
+        XCTAssertEqual(publishedSettings, [settings])
+        XCTAssertEqual(changedSettings, [settings])
+        XCTAssertEqual(store.load(), settings)
+        cancellable.cancel()
+    }
+
+    func testSettingsModelRestoreDefaultsPersistsAndNotifies() {
+        let temporaryDefaults = makeTemporaryDefaults()
+        let store = UserDefaultsSettingsStore(defaults: temporaryDefaults)
+        let model = VisualizationSettingsModel(settings: .default, store: store)
+        var changedSettings: [VisualizationSettings] = []
+        model.onChange = { changedSettings.append($0) }
+        var settings = VisualizationSettings.default
+        settings.style = .waveform
+        model.update(settings)
+
+        model.restoreDefaults()
+
+        XCTAssertEqual(model.settings, VisualizationSettings.default)
+        XCTAssertEqual(changedSettings, [settings, VisualizationSettings.default])
+        XCTAssertEqual(store.load(), VisualizationSettings.default)
+    }
+
     private func makeTemporaryDefaults() -> UserDefaults {
         let suiteName = "SoundVizTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
