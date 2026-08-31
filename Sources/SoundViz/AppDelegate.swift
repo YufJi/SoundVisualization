@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
@@ -10,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenuItem: NSMenuItem?
     private var toggleMenuItem: NSMenuItem?
     private var styleMenuItems: [NSMenuItem] = []
+    private var settingsWindowController: SettingsWindowController?
 
     init(
         visualizer: AudioVisualizer,
@@ -68,10 +70,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return item
         }
         styleContainer.submenu = styleMenu
+        let settingsItem = NSMenuItem(
+            title: "设置…",
+            action: #selector(openSettings),
+            keyEquivalent: ""
+        )
+        settingsItem.target = self
         let quit = NSMenuItem(title: "退出 SoundViz", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(status)
         menu.addItem(.separator())
         menu.addItem(styleContainer)
+        menu.addItem(.separator())
+        menu.addItem(settingsItem)
         menu.addItem(.separator())
         menu.addItem(toggle)
         menu.addItem(.separator())
@@ -122,6 +132,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.style = style
         settingsStore.save(settings)
         visualizer.setStyle(style)
+        refreshStyleMenu()
+    }
+
+    @objc private func openSettings() {
+        if let settingsWindowController {
+            settingsWindowController.showAndFocus()
+            return
+        }
+
+        let settingsBinding = Binding<VisualizationSettings>(
+            get: { [weak self] in self?.settings ?? .default },
+            set: { [weak self] newSettings in self?.applySettings(newSettings) }
+        )
+        let controller = SettingsWindowController(
+            settings: settingsBinding,
+            onRestoreDefaults: { [weak self] in
+                guard let self else { return }
+                self.applySettings(self.settingsStore.restoreDefaults())
+            }
+        )
+        settingsWindowController = controller
+        controller.showAndFocus()
+    }
+
+    private func applySettings(_ newSettings: VisualizationSettings) {
+        settings = newSettings
+        settingsStore.save(newSettings)
+        if newSettings.style != visualizer.style {
+            visualizer.setStyle(newSettings.style)
+        }
         refreshStyleMenu()
     }
 
