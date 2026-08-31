@@ -4,6 +4,8 @@ final class AudioVisualizer {
     private let waveformPointCount = 32
     private(set) var style: VisualizationStyle
     private(set) var bandCount: Int
+    private(set) var motionResponsePreset: MotionResponsePreset
+    private var motionResponseParameters: MotionResponseParameters
     private var targetBands: [Float]
     private var displayedBands: [CGFloat]
     private var targetWaveform: [Float]
@@ -13,9 +15,15 @@ final class AudioVisualizer {
     private var renderTimer: Timer?
     var onUpdate: ((NSImage) -> Void)?
 
-    init(style: VisualizationStyle, bandPreset: BandPreset = .twelve) {
+    init(
+        style: VisualizationStyle,
+        bandPreset: BandPreset = .twelve,
+        motionResponsePreset: MotionResponsePreset = .balanced
+    ) {
         self.style = style
         bandCount = bandPreset.bandCount
+        self.motionResponsePreset = motionResponsePreset
+        motionResponseParameters = motionResponsePreset.parameters
         targetBands = [Float](repeating: 0, count: bandCount)
         displayedBands = [CGFloat](repeating: 0, count: bandCount)
         targetWaveform = [Float](repeating: 0, count: waveformPointCount)
@@ -52,6 +60,11 @@ final class AudioVisualizer {
         bandCount = newBandCount
         targetBands = [Float](repeating: 0, count: newBandCount)
         displayedBands = [CGFloat](repeating: 0, count: newBandCount)
+    }
+
+    func updateMotionResponse(_ preset: MotionResponsePreset) {
+        motionResponsePreset = preset
+        motionResponseParameters = preset.parameters
     }
 
     private func makeBarsImage() -> NSImage {
@@ -188,15 +201,19 @@ final class AudioVisualizer {
         for index in 0..<bandCount {
             let target = max(0, min(1, CGFloat(targetBands[index])))
             let current = displayedBands[index]
-            let blend = target > current ? 0.70 : 0.24
+            let blend = target > current
+                ? CGFloat(motionResponseParameters.bandAttack)
+                : CGFloat(motionResponseParameters.bandDecay)
             displayedBands[index] = current + (target - current) * blend
         }
         for index in 0..<waveformPointCount {
             let target = max(-1, min(1, targetWaveform[index]))
-            displayedWaveform[index] += (CGFloat(target) - displayedWaveform[index]) * 0.55
+            let smoothing = CGFloat(motionResponseParameters.waveformSmoothing)
+            displayedWaveform[index] += (CGFloat(target) - displayedWaveform[index]) * smoothing
         }
 
-        displayedBeat = max(CGFloat(targetBeat), displayedBeat * 0.82)
+        let beatDecay = CGFloat(motionResponseParameters.beatDecay)
+        displayedBeat = max(CGFloat(targetBeat), displayedBeat * beatDecay)
         targetBeat = 0
         let rendered = image
         DispatchQueue.main.async { [weak self] in

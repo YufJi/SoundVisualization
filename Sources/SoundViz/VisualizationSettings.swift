@@ -13,6 +13,14 @@ enum BandPreset: Int, CaseIterable, Codable {
     var bandCount: Int {
         rawValue
     }
+
+}
+
+struct MotionResponseParameters: Equatable {
+    let bandAttack: Float
+    let bandDecay: Float
+    let waveformSmoothing: Float
+    let beatDecay: Float
 }
 
 enum MotionResponsePreset: String, CaseIterable, Codable {
@@ -28,6 +36,32 @@ enum MotionResponsePreset: String, CaseIterable, Codable {
             return "平衡"
         case .smooth:
             return "平滑"
+        }
+    }
+
+    var parameters: MotionResponseParameters {
+        switch self {
+        case .snappy:
+            return MotionResponseParameters(
+                bandAttack: 0.85,
+                bandDecay: 0.42,
+                waveformSmoothing: 0.75,
+                beatDecay: 0.70
+            )
+        case .balanced:
+            return MotionResponseParameters(
+                bandAttack: 0.65,
+                bandDecay: 0.16,
+                waveformSmoothing: 0.55,
+                beatDecay: 0.82
+            )
+        case .smooth:
+            return MotionResponseParameters(
+                bandAttack: 0.38,
+                bandDecay: 0.06,
+                waveformSmoothing: 0.30,
+                beatDecay: 0.92
+            )
         }
     }
 }

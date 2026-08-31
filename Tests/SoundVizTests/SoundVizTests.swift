@@ -81,6 +81,61 @@ final class SoundVizTests: XCTestCase {
         XCTAssertEqual(controller.bandPreset, .twentyFour)
     }
 
+    func testMotionResponsePresetsHaveDistinctParameters() {
+        let presets = MotionResponsePreset.allCases
+        let parameters = presets.map(\.parameters)
+
+        XCTAssertNotEqual(parameters[0], parameters[1])
+        XCTAssertNotEqual(parameters[0], parameters[2])
+        XCTAssertNotEqual(parameters[1], parameters[2])
+
+        let expectedBandAttack: [Float] = [0.85, 0.65, 0.38]
+        let expectedBandDecay: [Float] = [0.42, 0.16, 0.06]
+        let expectedWaveformSmoothing: [Float] = [0.75, 0.55, 0.30]
+        let expectedBeatDecay: [Float] = [0.70, 0.82, 0.92]
+
+        for index in 0..<presets.count {
+            XCTAssertEqual(parameters[index].bandAttack, expectedBandAttack[index])
+            XCTAssertEqual(parameters[index].bandDecay, expectedBandDecay[index])
+            XCTAssertEqual(parameters[index].waveformSmoothing, expectedWaveformSmoothing[index])
+            XCTAssertEqual(parameters[index].beatDecay, expectedBeatDecay[index])
+        }
+    }
+
+    func testAudioVisualizerAdoptsMotionResponsePreset() {
+        let visualizer = AudioVisualizer(style: .bars)
+
+        XCTAssertEqual(visualizer.motionResponsePreset, .balanced)
+        visualizer.updateMotionResponse(.snappy)
+
+        XCTAssertEqual(visualizer.motionResponsePreset, .snappy)
+    }
+
+    func testCaptureControllerAdoptsMotionResponsePreset() {
+        let controller = SystemAudioCaptureController(
+            onSpectrum: { _ in },
+            onStateChange: { _ in }
+        )
+
+        XCTAssertEqual(controller.motionResponsePreset, .balanced)
+        controller.updateMotionResponse(.smooth)
+
+        XCTAssertEqual(controller.motionResponsePreset, .smooth)
+    }
+
+    func testSpectrumAnalyzerAdoptsMotionResponsePreset() throws {
+        let analyzer = SpectrumAnalyzer(
+            requestedSampleRate: 48_000,
+            requestedBandCount: 12,
+            motionResponsePreset: .balanced
+        )
+
+        XCTAssertEqual(analyzer.motionResponsePreset, .balanced)
+        analyzer.updateMotionResponse(.snappy)
+
+        XCTAssertEqual(analyzer.motionResponsePreset, .snappy)
+    }
+
     func testDefaultVisualizationSettingsUseAgreedBaseline() {
         let settings = VisualizationSettings.default
 

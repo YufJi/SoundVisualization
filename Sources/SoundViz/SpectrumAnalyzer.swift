@@ -9,6 +9,8 @@ struct SpectrumFrame {
 final class SpectrumAnalyzer {
     private let sampleRate: Float
     private let bandCount: Int
+    private(set) var motionResponsePreset: MotionResponsePreset
+    private var motionResponseParameters: MotionResponseParameters
     private let fftSize = 1024
     private let log2FFTSize: vDSP_Length = 10
     private let fftSetup: FFTSetup
@@ -28,7 +30,13 @@ final class SpectrumAnalyzer {
     private let waveformPointCount = 32
     private var waveformPeak: Float = 0
 
-    init(requestedSampleRate: Float, requestedBandCount: Int) {
+    init(
+        requestedSampleRate: Float,
+        requestedBandCount: Int,
+        motionResponsePreset: MotionResponsePreset = .balanced
+    ) {
+        self.motionResponsePreset = motionResponsePreset
+        motionResponseParameters = motionResponsePreset.parameters
         sampleRate = max(8000, requestedSampleRate)
         bandCount = max(4, requestedBandCount)
         fftSetup = vDSP_create_fftsetup(log2FFTSize, FFTRadix(kFFTRadix2))!
@@ -80,6 +88,11 @@ final class SpectrumAnalyzer {
             beat: beatEnvelope,
             waveform: normalizedWaveform()
         )
+    }
+
+    func updateMotionResponse(_ preset: MotionResponsePreset) {
+        motionResponsePreset = preset
+        motionResponseParameters = preset.parameters
     }
 
     private func extractBandMagnitudes(from frame: [Float]) -> [Float] {
@@ -139,11 +152,12 @@ final class SpectrumAnalyzer {
 
     private func updateEnvelopes(with normalizedBands: [Float]) {
         for index in 0..<bandCount {
-            let target = normalizedBands[index]
-            let current = bandEnvelopes[index]
-            bandEnvelopes[index] = target > current
-                ? current + (target - current) * 0.65
-                : current + (target - current) * 0.16
+        let target = normalizedBands[index]
+        let current = bandEnvelopes[index]
+        let blend = target > current
+            ? motionResponseParameters.bandAttack
+            : motionResponseParameters.bandDecay
+        bandEnvelopes[index] = current + (target - current) * blend
         }
     }
 

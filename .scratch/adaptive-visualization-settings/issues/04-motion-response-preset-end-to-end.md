@@ -4,12 +4,12 @@
 
 **Blocked by:** 01 — Visualization settings model and persistence; 02 — SwiftUI settings window.
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
-- [ ] Snappy produces the fastest visible response and shortest decay.
-- [ ] Balanced produces the default response.
-- [ ] Smooth produces softer attack and longer decay.
-- [ ] Changing the preset applies immediately without restarting Listening.
-- [ ] The preset persists across relaunch.
-- [ ] Spectrum Bars, Waveform Line, and Spectrum Area all respond to the selected preset.
-- [ ] Tests verify that the three presets produce distinguishable motion parameters.
+- [x] Snappy produces the fastest visible response and shortest decay.
+- [x] Balanced produces the default response.
+- [x] Smooth produces softer attack and longer decay.
+- [x] Changing the preset applies immediately without restarting Listening.
+- [x] The preset persists across relaunch.
+- [x] Spectrum Bars, Waveform Line, and Spectrum Area all respond to the selected preset.
+- [x] Tests verify that the three presets produce distinguishable motion parameters.

@@ -5,6 +5,7 @@ import AudioToolbox
 protocol CaptureControlling {
     var isRunning: Bool { get }
     func updateBandPreset(_ preset: BandPreset)
+    func updateMotionResponse(_ preset: MotionResponsePreset)
     func start()
     func stop()
 }
@@ -28,13 +29,16 @@ final class SystemAudioCaptureController: CaptureControlling {
     private var spectrumAnalyzer: SpectrumAnalyzer?
     private(set) var isRunning = false
     private(set) var bandPreset: BandPreset
+    private(set) var motionResponsePreset: MotionResponsePreset
 
     init(
         bandPreset: BandPreset = .twelve,
+        motionResponsePreset: MotionResponsePreset = .balanced,
         onSpectrum: @escaping (SpectrumFrame) -> Void,
         onStateChange: @escaping (CaptureState) -> Void
     ) {
         self.bandPreset = bandPreset
+        self.motionResponsePreset = motionResponsePreset
         self.onSpectrum = onSpectrum
         self.onStateChange = onStateChange
     }
@@ -43,6 +47,13 @@ final class SystemAudioCaptureController: CaptureControlling {
         bandPreset = preset
         captureQueue.sync {
             recreateAnalyzer()
+        }
+    }
+
+    func updateMotionResponse(_ preset: MotionResponsePreset) {
+        motionResponsePreset = preset
+        captureQueue.sync {
+            spectrumAnalyzer?.updateMotionResponse(preset)
         }
     }
 
