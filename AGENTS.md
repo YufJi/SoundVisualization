@@ -42,7 +42,7 @@ Do not commit secrets, signing identities, recordings, or local build outputs. A
 
 ### Issue tracker
 
-Issues are tracked in this repository's GitHub Issues and managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues and specs are tracked as local Markdown files under `.scratch/`; GitHub is used only for repository synchronization. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
