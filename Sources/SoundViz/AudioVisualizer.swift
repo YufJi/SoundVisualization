@@ -1,9 +1,9 @@
 import AppKit
 
 final class AudioVisualizer {
-    private let barCount = 12
     private let waveformPointCount = 32
     private(set) var style: VisualizationStyle
+    private(set) var bandCount: Int
     private var targetBands: [Float]
     private var displayedBands: [CGFloat]
     private var targetWaveform: [Float]
@@ -13,10 +13,11 @@ final class AudioVisualizer {
     private var renderTimer: Timer?
     var onUpdate: ((NSImage) -> Void)?
 
-    init(style: VisualizationStyle) {
+    init(style: VisualizationStyle, bandPreset: BandPreset = .twelve) {
         self.style = style
-        targetBands = [Float](repeating: 0, count: barCount)
-        displayedBands = [CGFloat](repeating: 0, count: barCount)
+        bandCount = bandPreset.bandCount
+        targetBands = [Float](repeating: 0, count: bandCount)
+        displayedBands = [CGFloat](repeating: 0, count: bandCount)
         targetWaveform = [Float](repeating: 0, count: waveformPointCount)
         displayedWaveform = [CGFloat](repeating: 0, count: waveformPointCount)
         let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
@@ -45,6 +46,14 @@ final class AudioVisualizer {
         style = newStyle
     }
 
+    func updateBandPreset(_ preset: BandPreset) {
+        let newBandCount = preset.bandCount
+        guard newBandCount != bandCount else { return }
+        bandCount = newBandCount
+        targetBands = [Float](repeating: 0, count: newBandCount)
+        displayedBands = [CGFloat](repeating: 0, count: newBandCount)
+    }
+
     private func makeBarsImage() -> NSImage {
         let size = NSSize(width: 38, height: 18)
         let image = NSImage(size: size)
@@ -54,9 +63,9 @@ final class AudioVisualizer {
         let barWidth: CGFloat = 2
         let spacing: CGFloat = 1.2
         let centerY = size.height / 2
-        for index in 0..<barCount {
-            let pulseWeights: [CGFloat] = [0.22, 0.16, 0.10, 0.06, 0.04, 0.03, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
-            let band = min(1, displayedBands[index] + displayedBeat * pulseWeights[index])
+        for index in 0..<bandCount {
+            let pulseWeight = 0.28 / (CGFloat(index) + 1.25)
+            let band = min(1, displayedBands[index] + displayedBeat * pulseWeight)
             let height = max(2, min(size.height - 2, band * (size.height - 2)))
             let x = CGFloat(index) * (barWidth + spacing) + 1
             let rect = NSRect(x: x, y: centerY - height / 2, width: barWidth, height: height)
@@ -100,11 +109,11 @@ final class AudioVisualizer {
 
         let baseline: CGFloat = 2
         let availableHeight = size.height - 4
-        let pulseWeights: [CGFloat] = [0.16, 0.12, 0.08, 0.04, 0.03, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
-        let points = (0..<barCount).map { index in
-            let band = min(1, displayedBands[index] + displayedBeat * pulseWeights[index])
+        let points = (0..<bandCount).map { index in
+            let pulseWeight = 0.22 / (CGFloat(index) + 1.35)
+            let band = min(1, displayedBands[index] + displayedBeat * pulseWeight)
             return NSPoint(
-                x: 2 + CGFloat(index) / CGFloat(barCount - 1) * (size.width - 4),
+                x: 2 + CGFloat(index) / CGFloat(bandCount - 1) * (size.width - 4),
                 y: baseline + band * availableHeight
             )
         }
@@ -161,7 +170,7 @@ final class AudioVisualizer {
     func push(spectrum: SpectrumFrame) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            for index in 0..<self.barCount where index < spectrum.bands.count {
+            for index in 0..<self.bandCount where index < spectrum.bands.count {
                 self.targetBands[index] = spectrum.bands[index]
             }
             for index in 0..<self.waveformPointCount where index < spectrum.waveform.count {
@@ -172,12 +181,11 @@ final class AudioVisualizer {
     }
 
     private func render() {
-        for index in 0..<barCount {
+        for index in 0..<bandCount {
             let target = max(0, min(1, CGFloat(targetBands[index])))
             let current = displayedBands[index]
-            displayedBands[index] = target > current
-                ? current + (target - current) * 0.70
-                : current + (target - current) * 0.24
+            let blend = target > current ? 0.70 : 0.24
+            displayedBands[index] = current + (target - current) * blend
         }
         for index in 0..<waveformPointCount {
             let target = max(-1, min(1, targetWaveform[index]))

@@ -9,6 +9,10 @@ enum BandPreset: Int, CaseIterable, Codable {
     var title: String {
         "\(rawValue) 段"
     }
+
+    var bandCount: Int {
+        rawValue
+    }
 }
 
 enum MotionResponsePreset: String, CaseIterable, Codable {

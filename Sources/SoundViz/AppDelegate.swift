@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         captureController = SystemAudioCaptureController(
+            bandPreset: settingsModel.settings.bandPreset,
             onSpectrum: { [weak self] spectrum in
                 self?.visualizer.push(spectrum: spectrum)
             },
@@ -152,6 +153,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if newSettings.style != visualizer.style {
             visualizer.setStyle(newSettings.style)
         }
+        visualizer.updateBandPreset(newSettings.bandPreset)
+        captureController?.updateBandPreset(newSettings.bandPreset)
         refreshStyleMenu()
     }
 

@@ -4,6 +4,7 @@ import AudioToolbox
 
 protocol CaptureControlling {
     var isRunning: Bool { get }
+    func updateBandPreset(_ preset: BandPreset)
     func start()
     func stop()
 }
@@ -26,13 +27,23 @@ final class SystemAudioCaptureController: CaptureControlling {
     private var tapFormat: AudioStreamBasicDescription?
     private var spectrumAnalyzer: SpectrumAnalyzer?
     private(set) var isRunning = false
+    private(set) var bandPreset: BandPreset
 
     init(
+        bandPreset: BandPreset = .twelve,
         onSpectrum: @escaping (SpectrumFrame) -> Void,
         onStateChange: @escaping (CaptureState) -> Void
     ) {
+        self.bandPreset = bandPreset
         self.onSpectrum = onSpectrum
         self.onStateChange = onStateChange
+    }
+
+    func updateBandPreset(_ preset: BandPreset) {
+        bandPreset = preset
+        captureQueue.sync {
+            recreateAnalyzer()
+        }
     }
 
     func start() {
@@ -85,7 +96,7 @@ final class SystemAudioCaptureController: CaptureControlling {
         tapFormat = format
         spectrumAnalyzer = SpectrumAnalyzer(
             requestedSampleRate: Float(format.mSampleRate),
-            requestedBandCount: 12
+            requestedBandCount: bandPreset.rawValue
         )
 
         let tap: [String: Any] = [
@@ -137,6 +148,14 @@ final class SystemAudioCaptureController: CaptureControlling {
         let samples = analysisSamples(from: inputData)
         guard !samples.isEmpty else { return }
         onSpectrum(spectrumAnalyzer.process(samples: samples, timestamp: timestamp))
+    }
+
+    private func recreateAnalyzer() {
+        guard let tapFormat else { return }
+        spectrumAnalyzer = SpectrumAnalyzer(
+            requestedSampleRate: Float(tapFormat.mSampleRate),
+            requestedBandCount: bandPreset.rawValue
+        )
     }
 
     private func analysisSamples(from inputData: UnsafePointer<AudioBufferList>) -> [Float] {

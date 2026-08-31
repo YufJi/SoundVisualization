@@ -29,6 +29,42 @@ final class SoundVizTests: XCTestCase {
         XCTAssertTrue(secondFrame.waveform.allSatisfy { $0.isFinite })
     }
 
+    func testSpectrumAnalyzerSupportsEveryBandPreset() {
+        let samples = (0..<512).map { index in
+            sin(2 * Float.pi * Float(index) * 220 / 48_000) * 0.2
+        }
+
+        for preset in BandPreset.allCases {
+            let analyzer = SpectrumAnalyzer(requestedSampleRate: 48_000, requestedBandCount: preset.rawValue)
+            let frame = analyzer.process(samples: samples, timestamp: 0)
+
+            XCTAssertEqual(frame.bands.count, preset.rawValue)
+            XCTAssertTrue(frame.bands.allSatisfy { $0.isFinite && $0 >= 0 })
+        }
+    }
+
+    func testAudioVisualizerAdoptsUpdatedBandCount() {
+        let visualizer = AudioVisualizer(style: .bars, bandPreset: .twelve)
+
+        XCTAssertEqual(visualizer.bandCount, 12)
+        visualizer.updateBandPreset(.sixteen)
+
+        XCTAssertEqual(visualizer.bandCount, 16)
+    }
+
+    func testCaptureControllerStoresBandPresetWhenNoAnalyzerExists() {
+        let controller = SystemAudioCaptureController(
+            bandPreset: .twelve,
+            onSpectrum: { _ in },
+            onStateChange: { _ in }
+        )
+
+        XCTAssertEqual(controller.bandPreset, .twelve)
+        controller.updateBandPreset(.twentyFour)
+
+        XCTAssertEqual(controller.bandPreset, .twentyFour)
+    }
+
     func testDefaultVisualizationSettingsUseAgreedBaseline() {
         let settings = VisualizationSettings.default
 
