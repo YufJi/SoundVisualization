@@ -9,7 +9,6 @@ let visualizer = AudioVisualizer(
     bandPreset: settings.bandPreset,
     motionResponsePreset: settings.motionResponsePreset,
     renderingCadence: settings.renderingCadence,
-    renderScheduler: TimerRenderScheduler()
 )
 visualizer.updateBeatPulseIntensity(settings.beatPulseIntensity)
 visualizer.updateLowPowerMode(ProcessInfo.processInfo.isLowPowerModeEnabled)

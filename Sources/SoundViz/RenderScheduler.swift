@@ -10,7 +10,7 @@ final class TimerRenderScheduler: RenderScheduling {
     private(set) var interval: TimeInterval = 0
     private var timer: Timer?
 
-    func schedule(interval: TimeInterval, handler: @escaping () -> Void) {
+    func schedule(interval: TimeInterval, handler: @escaping @Sendable () -> Void) {
         guard interval > 0 else { return }
         self.interval = interval
         timer?.invalidate()

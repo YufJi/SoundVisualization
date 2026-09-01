@@ -19,6 +19,7 @@ final class AudioVisualizer {
     private(set) var isRenderingCadenceCapped = true
     private(set) var renderingFramesPerSecond = 15
     private let renderScheduler: RenderScheduling
+    private var scheduledFramesPerSecond: Int?
     private var targetBands: [Float]
     private var displayedBands: [CGFloat]
     private var targetWaveform: [Float]
@@ -136,9 +137,12 @@ final class AudioVisualizer {
 
     private func refreshRenderingCadence() {
         isRenderingCadenceCapped = motionState == .lowDistraction || isLowPowerModeEnabled
-        renderingFramesPerSecond = isRenderingCadenceCapped
+        let targetFramesPerSecond = isRenderingCadenceCapped
             ? 15
             : renderingCadence == .high ? 60 : 30
+        guard scheduledFramesPerSecond != targetFramesPerSecond else { return }
+        renderingFramesPerSecond = targetFramesPerSecond
+        scheduledFramesPerSecond = targetFramesPerSecond
         renderScheduler.schedule(
             interval: 1.0 / Double(renderingFramesPerSecond)
         ) { [weak self] in

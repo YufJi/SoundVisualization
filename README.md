@@ -15,7 +15,6 @@ SoundViz is a native macOS menu bar audio visualizer. It reads system output aud
 - Scene-aware motion that stays calm during quiet audio and becomes more active during music.
 - Rendering cadence preference with automatic 15 fps power saving during quiet scenes or Low Power Mode.
 - Respect for macOS Reduce Motion without hiding the visualization.
-- Independent 30 fps rendering clock.
 - Automatic persistence of the selected style.
 - A single-instance settings window for visualization preferences.
 - Menu bar status, start/stop controls, and quit action.

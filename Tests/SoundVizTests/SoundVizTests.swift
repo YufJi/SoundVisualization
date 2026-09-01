@@ -322,15 +322,29 @@ final class SoundVizTests: XCTestCase {
         )
         XCTAssertEqual(visualizer.renderingFramesPerSecond, 30)
         XCTAssertEqual(scheduler.interval, 1.0 / 30.0, accuracy: 0.000001)
+        XCTAssertEqual(scheduler.scheduleCount, 4)
+
+        let update = expectation(description: "Render handler remains active")
+        visualizer.onUpdate = { _ in
+            update.fulfill()
+        }
+        scheduler.executeLatest()
+        wait(for: [update], timeout: 1)
     }
 
     final class ManualRenderScheduler: RenderScheduling {
         private(set) var interval: TimeInterval = 0
         private(set) var scheduleCount = 0
+        private var handlers: [@Sendable () -> Void] = []
 
-        func schedule(interval: TimeInterval, handler: @escaping () -> Void) {
+        func schedule(interval: TimeInterval, handler: @escaping @Sendable () -> Void) {
             self.interval = interval
             scheduleCount += 1
+            handlers.append(handler)
+        }
+
+        func executeLatest() {
+            handlers.last?()
         }
 
         func stop() {
