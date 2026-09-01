@@ -271,7 +271,7 @@ final class AudioVisualizer {
             displayedBands[index] = current + (target - current) * blend
         }
         for index in 0..<waveformPointCount {
-            let target = max(-1, min(1, targetWaveform[index]))
+            let target = max(-1, min(1, CGFloat(targetWaveform[index]) * prominenceScale))
             let smoothing = CGFloat(motionResponseParameters.waveformSmoothing)
             displayedWaveform[index] += (CGFloat(target) - displayedWaveform[index]) * smoothing
         }

@@ -170,10 +170,10 @@ final class SoundVizTests: XCTestCase {
         )
         XCTAssertEqual(
             adapter.update(
-                spectrum: moderateSpectrum,
+                spectrum: quietSpectrum,
                 sceneAdaptationEnabled: true,
                 reduceMotion: false,
-                timestamp: 0.9
+                timestamp: 0.6
             ),
             .active
         )
@@ -182,13 +182,46 @@ final class SoundVizTests: XCTestCase {
                 spectrum: quietSpectrum,
                 sceneAdaptationEnabled: true,
                 reduceMotion: false,
-                timestamp: 1.3
+                timestamp: 1.9
             ),
             .lowDistraction
         )
     }
 
-    func testSceneAdapterDisabledStateIsActive() {
+    func testSceneAdapterDisabledPreventsStateMovement() {
+        let adapter = SceneAdapter()
+        let activeSpectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.8, count: 12),
+            beat: 0,
+            waveform: [Float](repeating: 0, count: 32)
+        )
+        let quietSpectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.1, count: 12),
+            beat: 0,
+            waveform: [Float](repeating: 0, count: 32)
+        )
+
+        XCTAssertEqual(
+            adapter.update(
+                spectrum: activeSpectrum,
+                sceneAdaptationEnabled: true,
+                reduceMotion: false,
+                timestamp: 0
+            ),
+            .active
+        )
+        XCTAssertEqual(
+            adapter.update(
+                spectrum: quietSpectrum,
+                sceneAdaptationEnabled: false,
+                reduceMotion: false,
+                timestamp: 10
+            ),
+            .active
+        )
+    }
+
+    func testSceneAdapterDisabledRetainsInitialLowDistraction() {
         let adapter = SceneAdapter()
         let quietSpectrum = SpectrumFrame(
             bands: [Float](repeating: 0.1, count: 12),
@@ -203,7 +236,7 @@ final class SoundVizTests: XCTestCase {
             timestamp: 10
         )
 
-        XCTAssertEqual(state, .active)
+        XCTAssertEqual(state, .lowDistraction)
     }
 
     func testSceneAdapterReduceMotionForcesLowDistraction() {

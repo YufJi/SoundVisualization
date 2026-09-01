@@ -7,7 +7,7 @@ enum VisualizationMotionState: Equatable {
 
 final class SceneAdapter {
     private(set) var state: VisualizationMotionState = .lowDistraction
-    private var lastActiveAt: TimeInterval?
+    private var lastQuietAt: TimeInterval?
 
     private let activationBandThreshold: Float = 0.56
     private let activationBeatThreshold: Float = 0.28
@@ -23,15 +23,11 @@ final class SceneAdapter {
     ) -> VisualizationMotionState {
         if reduceMotion {
             state = .lowDistraction
-            lastActiveAt = nil
+            lastQuietAt = nil
             return state
         }
 
-        guard sceneAdaptationEnabled else {
-            state = .active
-            lastActiveAt = nil
-            return state
-        }
+        guard sceneAdaptationEnabled else { return state }
 
         let bandActivity = spectrum.bands.max() ?? 0
         let isClearlyActive = bandActivity >= activationBandThreshold
@@ -41,12 +37,19 @@ final class SceneAdapter {
 
         if isClearlyActive {
             state = .active
-            lastActiveAt = timestamp
-        } else if state == .active, isQuiet,
-                  let lastActiveAt,
-                  timestamp - lastActiveAt >= activeTimeout {
-            state = .lowDistraction
-            self.lastActiveAt = nil
+            lastQuietAt = nil
+        } else if state == .active {
+            if isQuiet {
+                if lastQuietAt == nil {
+                    lastQuietAt = timestamp
+                }
+                if let lastQuietAt, timestamp - lastQuietAt >= activeTimeout {
+                    state = .lowDistraction
+                    self.lastQuietAt = nil
+                }
+            } else {
+                lastQuietAt = nil
+            }
         }
 
         return state
