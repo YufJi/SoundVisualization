@@ -24,7 +24,19 @@ struct CaptureFailure: Equatable, LocalizedError {
             if let action, let status {
                 return AppText.captureRuntimeFailure(action: action, status: status).localized
             }
-            return underlyingMessage ?? AppText.captureRuntimeFailure(
+            if underlyingMessage == AppText.unsupportedMacOS.localized {
+                return underlyingMessage!
+            }
+            return AppText.captureFailed(underlyingMessage ?? "").localized
+        }
+    }
+
+    static func unsupportedMacOS() -> CaptureFailure {
+        CaptureFailure(
+            kind: .runtime,
+            underlyingMessage: AppText.unsupportedMacOS.localized
+        )
+    }
                 action: .readSystemAudio,
                 status: kAudioHardwareUnspecifiedError
             ).localized

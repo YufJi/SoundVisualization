@@ -19,6 +19,7 @@ SoundViz is a native macOS menu bar audio visualizer. It reads system output aud
 - A single-instance settings window for visualization preferences.
 - Menu bar status, start/stop controls, and quit action.
 - Clear capture states with recovery actions for permission and runtime failures.
+- English and Simplified Chinese localization.
 
 ## Build and Run
 

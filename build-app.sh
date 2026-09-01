@@ -19,8 +19,11 @@ swift build -c "$CONFIGURATION"
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
+mkdir -p "$RESOURCES_DIR/en.lproj" "$RESOURCES_DIR/zh-Hans.lproj"
 cp ".build/$CONFIGURATION/$APP_NAME" "$MACOS_DIR/$APP_NAME"
 cp "Resources/SoundViz.icns" "$RESOURCES_DIR/AppIcon.icns"
+cp "Resources/en.lproj/InfoPlist.strings" "$RESOURCES_DIR/en.lproj/InfoPlist.strings"
+cp "Resources/zh-Hans.lproj/InfoPlist.strings" "$RESOURCES_DIR/zh-Hans.lproj/InfoPlist.strings"
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

@@ -62,15 +62,7 @@ final class SystemAudioCaptureController: CaptureControlling {
         onStateChange(.starting)
 
         guard #available(macOS 14.2, *) else {
-            onStateChange(
-                .failed(
-                    CaptureFailure(
-                        kind: .runtime,
-                        status: kAudioHardwareUnspecifiedError,
-                        action: .readSystemAudio
-                    )
-                )
-            )
+            onStateChange(.failed(CaptureFailure.unsupportedMacOS()))
             return
         }
 
