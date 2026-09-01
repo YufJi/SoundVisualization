@@ -12,6 +12,8 @@ SoundViz is a native macOS menu bar audio visualizer. It reads system output aud
 - Low-frequency spectral-flux beat pulses.
 - Beat pulse intensity presets: Off, Low, Normal, and High.
 - Snappy, balanced, or smooth motion response presets.
+- Scene-aware motion that stays calm during quiet audio and becomes more active during music.
+- Respect for macOS Reduce Motion without hiding the visualization.
 - Independent 30 fps rendering clock.
 - Automatic persistence of the selected style.
 - A single-instance settings window for visualization preferences.

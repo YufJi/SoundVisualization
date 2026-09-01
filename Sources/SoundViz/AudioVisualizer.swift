@@ -9,6 +9,11 @@ final class AudioVisualizer {
     private(set) var beatPulseIntensity: BeatPulseIntensity
     private(set) var beatPulseScale: CGFloat
     private(set) var currentBeat: CGFloat = 0
+    private let sceneAdapter = SceneAdapter()
+    private(set) var motionState: VisualizationMotionState = .lowDistraction
+    private(set) var reduceMotion = false
+    private(set) var prominenceScale: CGFloat = 1
+    private var sceneAdaptationEnabled = true
     private var targetBands: [Float]
     private var displayedBands: [CGFloat]
     private var targetWaveform: [Float]
@@ -80,6 +85,38 @@ final class AudioVisualizer {
             displayedBeat = 0
             currentBeat = 0
         }
+    }
+
+    func updateReduceMotion(_ enabled: Bool) {
+        reduceMotion = enabled
+        motionState = sceneAdapter.update(
+            spectrum: SpectrumFrame(bands: [], beat: 0, waveform: []),
+            sceneAdaptationEnabled: true,
+            reduceMotion: enabled,
+            timestamp: Date().timeIntervalSince1970
+        )
+        prominenceScale = prominenceScale(for: motionState)
+        if enabled {
+            targetBeat = 0
+            displayedBeat = 0
+            currentBeat = 0
+        }
+    }
+
+    func updateSceneAdaptation(_ enabled: Bool) {
+        sceneAdaptationEnabled = enabled
+        motionState = sceneAdapter.update(
+            spectrum: SpectrumFrame(bands: [], beat: 0, waveform: []),
+            sceneAdaptationEnabled: enabled,
+            reduceMotion: reduceMotion,
+            timestamp: Date().timeIntervalSince1970
+        )
+        prominenceScale = prominenceScale(for: motionState)
+    }
+
+    private func prominenceScale(for state: VisualizationMotionState) -> CGFloat {
+        if reduceMotion { return 0.65 }
+        return state == .active ? 1 : 0.65
     }
 
     private func makeBarsImage() -> NSImage {
@@ -207,6 +244,14 @@ final class AudioVisualizer {
     }
 
     func applySpectrum(_ spectrum: SpectrumFrame) {
+        motionState = sceneAdapter.update(
+            spectrum: spectrum,
+            sceneAdaptationEnabled: sceneAdaptationEnabled,
+            reduceMotion: reduceMotion,
+            timestamp: Date().timeIntervalSince1970
+        )
+        prominenceScale = prominenceScale(for: motionState)
+
         for index in 0..<bandCount where index < spectrum.bands.count {
             targetBands[index] = spectrum.bands[index]
         }
@@ -218,7 +263,7 @@ final class AudioVisualizer {
 
     func render() {
         for index in 0..<bandCount {
-            let target = max(0, min(1, CGFloat(targetBands[index])))
+            let target = max(0, min(1, CGFloat(targetBands[index]) * prominenceScale))
             let current = displayedBands[index]
             let blend = target > current
                 ? CGFloat(motionResponseParameters.bandAttack)
@@ -232,7 +277,8 @@ final class AudioVisualizer {
         }
 
         let beatDecay = CGFloat(motionResponseParameters.beatDecay)
-        displayedBeat = max(CGFloat(targetBeat), displayedBeat * beatDecay)
+        let targetPulse = reduceMotion ? 0 : CGFloat(targetBeat) * prominenceScale
+        displayedBeat = max(targetPulse, displayedBeat * beatDecay)
         currentBeat = displayedBeat
         targetBeat = 0
         let rendered = image

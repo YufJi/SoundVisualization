@@ -132,6 +132,117 @@ final class SoundVizTests: XCTestCase {
         XCTAssertLessThan(renderedBeats[2], renderedBeats[3])
     }
 
+    func testSceneAdapterActivatesAndDeactivatesWithHysteresisAndTimeout() {
+        let adapter = SceneAdapter()
+        let activeSpectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.8, count: 12),
+            beat: 0,
+            waveform: [Float](repeating: 0, count: 32)
+        )
+        let quietSpectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.1, count: 12),
+            beat: 0,
+            waveform: [Float](repeating: 0, count: 32)
+        )
+        let moderateSpectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.45, count: 12),
+            beat: 0,
+            waveform: [Float](repeating: 0, count: 32)
+        )
+
+        XCTAssertEqual(
+            adapter.update(
+                spectrum: activeSpectrum,
+                sceneAdaptationEnabled: true,
+                reduceMotion: false,
+                timestamp: 0
+            ),
+            .active
+        )
+        XCTAssertEqual(
+            adapter.update(
+                spectrum: moderateSpectrum,
+                sceneAdaptationEnabled: true,
+                reduceMotion: false,
+                timestamp: 0.5
+            ),
+            .active
+        )
+        XCTAssertEqual(
+            adapter.update(
+                spectrum: moderateSpectrum,
+                sceneAdaptationEnabled: true,
+                reduceMotion: false,
+                timestamp: 0.9
+            ),
+            .active
+        )
+        XCTAssertEqual(
+            adapter.update(
+                spectrum: quietSpectrum,
+                sceneAdaptationEnabled: true,
+                reduceMotion: false,
+                timestamp: 1.3
+            ),
+            .lowDistraction
+        )
+    }
+
+    func testSceneAdapterDisabledStateIsActive() {
+        let adapter = SceneAdapter()
+        let quietSpectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.1, count: 12),
+            beat: 0,
+            waveform: [Float](repeating: 0, count: 32)
+        )
+
+        let state = adapter.update(
+            spectrum: quietSpectrum,
+            sceneAdaptationEnabled: false,
+            reduceMotion: false,
+            timestamp: 10
+        )
+
+        XCTAssertEqual(state, .active)
+    }
+
+    func testSceneAdapterReduceMotionForcesLowDistraction() {
+        let adapter = SceneAdapter()
+        let activeSpectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.9, count: 12),
+            beat: 1,
+            waveform: [Float](repeating: 0, count: 32)
+        )
+
+        let state = adapter.update(
+            spectrum: activeSpectrum,
+            sceneAdaptationEnabled: true,
+            reduceMotion: true,
+            timestamp: 10
+        )
+
+        XCTAssertEqual(state, .lowDistraction)
+    }
+
+    func testReduceMotionSuppressesPulseWhilePreservingVisualization() {
+        let visualizer = AudioVisualizer(style: .bars)
+        let spectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.9, count: 12),
+            beat: 1,
+            waveform: [Float](repeating: 0.25, count: 32)
+        )
+
+        visualizer.updateReduceMotion(true)
+        visualizer.applySpectrum(spectrum)
+        visualizer.render()
+
+        XCTAssertEqual(visualizer.motionState, .lowDistraction)
+        XCTAssertEqual(visualizer.currentBeat, 0)
+        XCTAssertEqual(visualizer.style, .bars)
+        XCTAssertEqual(visualizer.bandCount, 12)
+        XCTAssertLessThan(visualizer.prominenceScale, 1)
+    }
+
     func testMotionResponsePresetsHaveDistinctParameters() {
         let presets = MotionResponsePreset.allCases
         let parameters = presets.map(\.parameters)

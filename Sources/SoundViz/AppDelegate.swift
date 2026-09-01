@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var toggleMenuItem: NSMenuItem?
     private var styleMenuItems: [NSMenuItem] = []
     private var settingsWindowController: SettingsWindowController?
+    private var sceneAdaptationMenuItem: NSMenuItem?
 
     init(
         visualizer: AudioVisualizer,
@@ -40,6 +41,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
         captureController?.start()
+        visualizer.updateReduceMotion(
+            NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        )
+        observeReduceMotion()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -75,6 +80,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: ""
         )
         settingsItem.target = self
+        let sceneAdaptationItem = NSMenuItem(
+            title: "根据音频调整动态",
+            action: #selector(toggleSceneAdaptation),
+            keyEquivalent: ""
+        )
+        sceneAdaptationItem.target = self
         let quit = NSMenuItem(title: "退出 SoundViz", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(status)
         menu.addItem(.separator())
@@ -82,14 +93,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(settingsItem)
         menu.addItem(.separator())
+        menu.addItem(sceneAdaptationItem)
+        menu.addItem(.separator())
         menu.addItem(toggle)
         menu.addItem(.separator())
         menu.addItem(quit)
         statusMenuItem = status
         toggleMenuItem = toggle
+        sceneAdaptationMenuItem = sceneAdaptationItem
         self.menu = menu
         statusItem?.menu = menu
         refreshStyleMenu()
+        refreshSceneAdaptationMenu()
+    }
+
+    private func observeReduceMotion() {
+        NotificationCenter.default.addObserver(
+            forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+            object: NSWorkspace.shared,
+            queue: .main
+        ) { [weak self] _ in
+            self?.visualizer.updateReduceMotion(
+                NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            )
+        }
     }
 
     private func updateStatus(_ state: CaptureState) {
@@ -150,6 +177,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.showAndFocus()
     }
 
+    @objc private func toggleSceneAdaptation() {
+        var settings = settingsModel.settings
+        settings.sceneAdaptationEnabled.toggle()
+        settingsModel.update(settings)
+    }
+
     func applyVisualSettings(_ newSettings: VisualizationSettings) {
         if newSettings.style != visualizer.style {
             visualizer.setStyle(newSettings.style)
@@ -159,13 +192,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         visualizer.updateMotionResponse(newSettings.motionResponsePreset)
         captureController?.updateMotionResponse(newSettings.motionResponsePreset)
         visualizer.updateBeatPulseIntensity(newSettings.beatPulseIntensity)
+        visualizer.updateSceneAdaptation(newSettings.sceneAdaptationEnabled)
         refreshStyleMenu()
+        refreshSceneAdaptationMenu()
     }
 
     private func refreshStyleMenu() {
         for item in styleMenuItems {
             let style = VisualizationStyle(rawValue: item.representedObject as? String ?? "")
-            item.state = style == settingsModel.settings.style ? .on : .off
+        item.state = style == settingsModel.settings.style ? .on : .off
         }
+    }
+
+    private func refreshSceneAdaptationMenu() {
+        sceneAdaptationMenuItem?.state = settingsModel.settings.sceneAdaptationEnabled ? .on : .off
     }
 }
