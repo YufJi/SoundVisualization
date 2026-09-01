@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Visualization settings model and persistence; 02 — SwiftUI settings window.
 
-**Status:** ready-for-human
+**Status:** resolved
 
 - [x] Snappy produces the fastest visible response and shortest decay.
 - [x] Balanced produces the default response.
@@ -13,3 +13,7 @@
 - [x] The preset persists across relaunch.
 - [x] Spectrum Bars, Waveform Line, and Spectrum Area all respond to the selected preset.
 - [x] Tests verify that the three presets produce distinguishable motion parameters.
+
+## Answer
+
+Implemented with named Motion Response parameters, immediate propagation to analysis and rendering, persisted startup behavior, and distinct-preset coverage.

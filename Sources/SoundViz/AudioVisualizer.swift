@@ -6,11 +6,14 @@ final class AudioVisualizer {
     private(set) var bandCount: Int
     private(set) var motionResponsePreset: MotionResponsePreset
     private var motionResponseParameters: MotionResponseParameters
+    private(set) var beatPulseIntensity: BeatPulseIntensity
+    private(set) var beatPulseScale: CGFloat
+    private(set) var currentBeat: CGFloat = 0
     private var targetBands: [Float]
     private var displayedBands: [CGFloat]
     private var targetWaveform: [Float]
     private var displayedWaveform: [CGFloat]
-    private var targetBeat: Float = 0
+    private(set) var targetBeat: Float = 0
     private var displayedBeat: CGFloat = 0
     private var renderTimer: Timer?
     var onUpdate: ((NSImage) -> Void)?
@@ -24,6 +27,8 @@ final class AudioVisualizer {
         bandCount = bandPreset.bandCount
         self.motionResponsePreset = motionResponsePreset
         motionResponseParameters = motionResponsePreset.parameters
+        beatPulseIntensity = .normal
+        beatPulseScale = BeatPulseIntensity.normal.pulseScale
         targetBands = [Float](repeating: 0, count: bandCount)
         displayedBands = [CGFloat](repeating: 0, count: bandCount)
         targetWaveform = [Float](repeating: 0, count: waveformPointCount)
@@ -65,6 +70,16 @@ final class AudioVisualizer {
     func updateMotionResponse(_ preset: MotionResponsePreset) {
         motionResponsePreset = preset
         motionResponseParameters = preset.parameters
+    }
+
+    func updateBeatPulseIntensity(_ intensity: BeatPulseIntensity) {
+        beatPulseIntensity = intensity
+        beatPulseScale = intensity.pulseScale
+        if intensity == .off {
+            targetBeat = 0
+            displayedBeat = 0
+            currentBeat = 0
+        }
     }
 
     private func makeBarsImage() -> NSImage {
@@ -187,17 +202,21 @@ final class AudioVisualizer {
     func push(spectrum: SpectrumFrame) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            for index in 0..<self.bandCount where index < spectrum.bands.count {
-                self.targetBands[index] = spectrum.bands[index]
-            }
-            for index in 0..<self.waveformPointCount where index < spectrum.waveform.count {
-                self.targetWaveform[index] = spectrum.waveform[index]
-            }
-            self.targetBeat = spectrum.beat
+            self.applySpectrum(spectrum)
         }
     }
 
-    private func render() {
+    func applySpectrum(_ spectrum: SpectrumFrame) {
+        for index in 0..<bandCount where index < spectrum.bands.count {
+            targetBands[index] = spectrum.bands[index]
+        }
+        for index in 0..<waveformPointCount where index < spectrum.waveform.count {
+            targetWaveform[index] = spectrum.waveform[index]
+        }
+        targetBeat = spectrum.beat * Float(beatPulseScale)
+    }
+
+    func render() {
         for index in 0..<bandCount {
             let target = max(0, min(1, CGFloat(targetBands[index])))
             let current = displayedBands[index]
@@ -214,6 +233,7 @@ final class AudioVisualizer {
 
         let beatDecay = CGFloat(motionResponseParameters.beatDecay)
         displayedBeat = max(CGFloat(targetBeat), displayedBeat * beatDecay)
+        currentBeat = displayedBeat
         targetBeat = 0
         let rendered = image
         DispatchQueue.main.async { [weak self] in

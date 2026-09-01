@@ -85,6 +85,53 @@ final class SoundVizTests: XCTestCase {
         XCTAssertEqual(controller.bandPreset, .twentyFour)
     }
 
+    func testBeatPulseIntensitiesHaveExpectedScales() {
+        XCTAssertEqual(BeatPulseIntensity.off.pulseScale, 0)
+        XCTAssertEqual(BeatPulseIntensity.low.pulseScale, 0.55)
+        XCTAssertEqual(BeatPulseIntensity.normal.pulseScale, 1)
+        XCTAssertEqual(BeatPulseIntensity.high.pulseScale, 1.6)
+    }
+
+    func testAudioVisualizerAdoptsBeatPulseIntensity() {
+        let visualizer = AudioVisualizer(style: .bars)
+
+        XCTAssertEqual(visualizer.beatPulseIntensity, .normal)
+        visualizer.updateBeatPulseIntensity(.off)
+
+        XCTAssertEqual(visualizer.beatPulseIntensity, .off)
+    }
+
+    func testBeatPulseIntensityOrdersRenderedPulseWhilePreservingSpectrumForm() {
+        let spectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.8, count: 12),
+            beat: 1,
+            waveform: [Float](repeating: 0.25, count: 32)
+        )
+        var renderedBeats: [CGFloat] = []
+
+        for intensity in BeatPulseIntensity.allCases {
+            let visualizer = AudioVisualizer(style: .bars)
+            let originalStyle = visualizer.style
+            let originalBandCount = visualizer.bandCount
+
+            visualizer.updateBeatPulseIntensity(intensity)
+            XCTAssertEqual(visualizer.beatPulseIntensity, intensity)
+            XCTAssertEqual(visualizer.beatPulseScale, intensity.pulseScale)
+
+            visualizer.applySpectrum(spectrum)
+            XCTAssertEqual(visualizer.targetBeat, Float(intensity.pulseScale))
+            visualizer.render()
+
+            renderedBeats.append(visualizer.currentBeat)
+            XCTAssertEqual(visualizer.style, originalStyle)
+            XCTAssertEqual(visualizer.bandCount, originalBandCount)
+        }
+
+        XCTAssertEqual(renderedBeats[0], 0)
+        XCTAssertLessThan(renderedBeats[1], renderedBeats[2])
+        XCTAssertLessThan(renderedBeats[2], renderedBeats[3])
+    }
+
     func testMotionResponsePresetsHaveDistinctParameters() {
         let presets = MotionResponsePreset.allCases
         let parameters = presets.map(\.parameters)

@@ -77,6 +77,19 @@ enum BeatPulseIntensity: String, CaseIterable, Codable {
             return "高"
         }
     }
+
+    var pulseScale: CGFloat {
+        switch self {
+        case .off:
+            return 0
+        case .low:
+            return 0.55
+        case .normal:
+            return 1
+        case .high:
+            return 1.6
+        }
+    }
 }
 
 enum RenderingCadence: String, CaseIterable, Codable {

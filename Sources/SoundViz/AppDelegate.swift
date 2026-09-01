@@ -158,6 +158,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         captureController?.updateBandPreset(newSettings.bandPreset)
         visualizer.updateMotionResponse(newSettings.motionResponsePreset)
         captureController?.updateMotionResponse(newSettings.motionResponsePreset)
+        visualizer.updateBeatPulseIntensity(newSettings.beatPulseIntensity)
         refreshStyleMenu()
     }
 

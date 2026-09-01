@@ -10,6 +10,7 @@ SoundViz is a native macOS menu bar audio visualizer. It reads system output aud
 - 12 logarithmic frequency bands with per-band adaptive normalization.
 - Selectable 8, 12, 16, or 24 frequency bands.
 - Low-frequency spectral-flux beat pulses.
+- Beat pulse intensity presets: Off, Low, Normal, and High.
 - Snappy, balanced, or smooth motion response presets.
 - Independent 30 fps rendering clock.
 - Automatic persistence of the selected style.
