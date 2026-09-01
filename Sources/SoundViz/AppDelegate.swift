@@ -12,6 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var styleMenuItems: [NSMenuItem] = []
     private var settingsWindowController: SettingsWindowController?
     private var sceneAdaptationMenuItem: NSMenuItem?
+    private var openSystemSettingsMenuItem: NSMenuItem?
+    private var retryCaptureMenuItem: NSMenuItem?
 
     init(
         visualizer: AudioVisualizer,
@@ -87,6 +89,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: ""
         )
         sceneAdaptationItem.target = self
+        let openSystemSettingsItem = NSMenuItem(
+            title: "打开音频捕获设置…",
+            action: #selector(openAudioCaptureSettings),
+            keyEquivalent: ""
+        )
+        openSystemSettingsItem.target = self
+        openSystemSettingsItem.isHidden = true
+        let retryCaptureItem = NSMenuItem(
+            title: "重试捕获",
+            action: #selector(retryCapture),
+            keyEquivalent: ""
+        )
+        retryCaptureItem.target = self
+        retryCaptureItem.isHidden = true
         let quit = NSMenuItem(title: "退出 SoundViz", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(status)
         menu.addItem(.separator())
@@ -98,10 +114,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(toggle)
         menu.addItem(.separator())
+        menu.addItem(openSystemSettingsItem)
+        menu.addItem(retryCaptureItem)
+        menu.addItem(.separator())
         menu.addItem(quit)
         statusMenuItem = status
         toggleMenuItem = toggle
         sceneAdaptationMenuItem = sceneAdaptationItem
+        openSystemSettingsMenuItem = openSystemSettingsItem
+        retryCaptureMenuItem = retryCaptureItem
         self.menu = menu
         statusItem?.menu = menu
         refreshStyleMenu()
@@ -145,8 +166,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             statusMenuItem?.title = "需要在系统设置中授权音频捕获"
             toggleMenuItem?.title = "重新检查权限"
             toggleMenuItem?.isEnabled = true
-        case .failed(let message):
-            statusMenuItem?.title = "失败：\(message)"
+        case .failed(let failure):
+            statusMenuItem?.title = "捕获失败：\(failure.message)"
             toggleMenuItem?.title = "重试"
             toggleMenuItem?.isEnabled = true
         case .stopped:
@@ -154,6 +175,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             toggleMenuItem?.title = "开始可视化"
             toggleMenuItem?.isEnabled = true
         }
+
+        if state == .stopped {
+            visualizer.enterAttenuatedBaseline()
+        }
+
+        refreshRecoveryMenu(for: state)
+    }
+
+    private func refreshRecoveryMenu(for state: CaptureState) {
+        let permissionRequired: Bool
+        let runtimeFailed: Bool
+
+        switch state {
+        case .permissionRequired:
+            permissionRequired = true
+            runtimeFailed = false
+        case .failed(let failure):
+            permissionRequired = failure.kind == .permissionRequired
+            runtimeFailed = failure.kind == .runtime
+        default:
+            permissionRequired = false
+            runtimeFailed = false
+        }
+
+        openSystemSettingsMenuItem?.isHidden = !permissionRequired
+        retryCaptureMenuItem?.isHidden = !(permissionRequired || runtimeFailed)
+    }
+
+    @objc private func openAudioCaptureSettings() {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Microphone"
+        ) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc private func retryCapture() {
+        captureController?.start()
     }
 
     @objc private func toggleCapture() {

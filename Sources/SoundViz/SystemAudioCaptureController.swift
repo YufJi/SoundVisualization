@@ -10,11 +10,11 @@ protocol CaptureControlling {
     func stop()
 }
 
-enum CaptureState {
+enum CaptureState: Equatable {
     case starting
     case running
     case permissionRequired
-    case failed(String)
+    case failed(CaptureFailure)
     case stopped
 }
 
@@ -62,7 +62,14 @@ final class SystemAudioCaptureController: CaptureControlling {
         onStateChange(.starting)
 
         guard #available(macOS 14.2, *) else {
-            onStateChange(.failed("Core Audio Tap 需要 macOS 14.2 或更高版本"))
+            onStateChange(
+                .failed(
+                    CaptureFailure(
+                        kind: .runtime,
+                        message: "Core Audio Tap 需要 macOS 14.2 或更高版本。"
+                    )
+                )
+            )
             return
         }
 
@@ -74,7 +81,7 @@ final class SystemAudioCaptureController: CaptureControlling {
             onStateChange(.running)
         } catch {
             cleanup()
-            onStateChange(.failed(error.localizedDescription))
+            onStateChange(.failed(CaptureFailure(error: error)))
         }
     }
 
@@ -257,7 +264,7 @@ final class SystemAudioCaptureController: CaptureControlling {
     }
 }
 
-private enum CaptureError: LocalizedError {
+enum CaptureError: LocalizedError {
     case osStatus(OSStatus, String)
     case message(String)
 
@@ -267,6 +274,15 @@ private enum CaptureError: LocalizedError {
             return "\(action)失败（\(status)）"
         case .message(let message):
             return message
+        }
+    }
+
+    var failure: CaptureFailure {
+        switch self {
+        case .osStatus(let status, let action):
+            return CaptureFailure.classify(status: status, action: action)
+        case .message(let message):
+            return CaptureFailure(kind: .runtime, message: message)
         }
     }
 }

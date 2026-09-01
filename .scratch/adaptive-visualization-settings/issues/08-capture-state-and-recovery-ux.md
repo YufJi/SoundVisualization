@@ -4,13 +4,17 @@
 
 **Blocked by:** 01 — Visualization settings model and persistence; 02 — SwiftUI settings window.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Starting, Running, Stopped, Permission Required, and Capture Failure have distinct menu status text.
-- [ ] Stopping Listening shows a static Attenuated Baseline while retaining the menu entry.
-- [ ] Settings and Quick Controls remain available in Stopped State.
-- [ ] Permission Required exposes an action to open the relevant macOS settings area.
-- [ ] Permission Required exposes Retry without automatically repeating authorization prompts.
-- [ ] Capture Failure exposes the failure reason and Retry.
-- [ ] Capture Failure stops Listening and does not retry indefinitely.
-- [ ] Successful Retry returns the menu to Running and resumes visualization.
+- [x] Starting, Running, Stopped, Permission Required, and Capture Failure have distinct menu status text.
+- [x] Stopping Listening shows a static Attenuated Baseline while retaining the menu entry.
+- [x] Settings and Quick Controls remain available in Stopped State.
+- [x] Permission Required exposes an action to open the relevant macOS settings area.
+- [x] Permission Required exposes Retry without automatically repeating authorization prompts.
+- [x] Capture Failure exposes the failure reason and Retry.
+- [x] Capture Failure stops Listening and does not retry indefinitely.
+- [x] Successful Retry returns the menu to Running and resumes visualization.
+
+## Answer
+
+Implemented with CaptureFailure classification, distinct menu states, dedicated permission/runtime recovery actions, no automatic retry loop, and an Attenuated Baseline for stopped or failed sessions.

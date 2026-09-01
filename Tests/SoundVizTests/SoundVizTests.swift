@@ -1,3 +1,4 @@
+import CoreAudio
 import XCTest
 
 @testable import SoundViz
@@ -255,6 +256,43 @@ final class SoundVizTests: XCTestCase {
         )
 
         XCTAssertEqual(state, .lowDistraction)
+    }
+
+    func testCaptureFailureClassifierIdentifiesPermissionStatus() {
+        let failure = CaptureFailure.classify(
+            status: kAudioDevicePermissionsError,
+            action: "创建系统音频 Tap"
+        )
+
+        XCTAssertEqual(failure.kind, .permissionRequired)
+        XCTAssertEqual(failure.status, kAudioDevicePermissionsError)
+    }
+
+    func testCaptureFailureClassifierTreatsOtherStatusesAsRuntimeFailures() {
+        let failure = CaptureFailure.classify(
+            status: kAudioHardwareUnspecifiedError,
+            action: "创建私有聚合设备"
+        )
+
+        XCTAssertEqual(failure.kind, .runtime)
+        XCTAssertEqual(failure.status, kAudioHardwareUnspecifiedError)
+    }
+
+    func testStoppedBaselineClearsLiveMotionWhilePreservingForm() {
+        let visualizer = AudioVisualizer(style: .spectrumArea, bandPreset: .sixteen)
+        let spectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.9, count: 16),
+            beat: 1,
+            waveform: [Float](repeating: 0.5, count: 32)
+        )
+
+        visualizer.applySpectrum(spectrum)
+        visualizer.render()
+        visualizer.enterAttenuatedBaseline()
+
+        XCTAssertEqual(visualizer.currentBeat, 0)
+        XCTAssertEqual(visualizer.style, .spectrumArea)
+        XCTAssertEqual(visualizer.bandCount, 16)
     }
 
     func testReduceMotionSuppressesPulseWhilePreservingVisualization() {

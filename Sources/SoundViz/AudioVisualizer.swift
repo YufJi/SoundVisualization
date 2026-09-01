@@ -125,6 +125,17 @@ final class AudioVisualizer {
         refreshRenderingCadence()
     }
 
+    func enterAttenuatedBaseline() {
+        targetBands = [Float](repeating: 0, count: bandCount)
+        displayedBands = [CGFloat](repeating: 0, count: bandCount)
+        targetWaveform = [Float](repeating: 0, count: waveformPointCount)
+        displayedWaveform = [CGFloat](repeating: 0, count: waveformPointCount)
+        targetBeat = 0
+        displayedBeat = 0
+        currentBeat = 0
+        render()
+    }
+
     func updateRenderingCadence(_ cadence: RenderingCadence) {
         renderingCadence = cadence
         refreshRenderingCadence()
