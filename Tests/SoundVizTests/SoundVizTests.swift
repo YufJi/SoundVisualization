@@ -11,6 +11,23 @@ final class SoundVizTests: XCTestCase {
         XCTAssertEqual(VisualizationStyle.allCases.count, 3)
     }
 
+    func testAppLanguageSelectionFollowsSystemPreferences() {
+        XCTAssertEqual(AppLanguage.from(preferredLanguages: ["en-US"]), .english)
+        XCTAssertEqual(AppLanguage.from(preferredLanguages: ["zh-Hans-CN"]), .simplifiedChinese)
+        XCTAssertEqual(AppLanguage.from(preferredLanguages: ["zh-CN"]), .simplifiedChinese)
+        XCTAssertEqual(AppLanguage.from(preferredLanguages: ["zh-Hant-TW"]), .english)
+        XCTAssertEqual(AppLanguage.from(preferredLanguages: []), .english)
+    }
+
+    func testUserFacingTextSupportsEnglishAndSimplifiedChinese() {
+        XCTAssertEqual(AppText.settings.localized(in: .english), "Settings…")
+        XCTAssertEqual(AppText.settings.localized(in: .simplifiedChinese), "设置…")
+        XCTAssertEqual(AppText.running.localized(in: .english), "Listening to system audio")
+        XCTAssertEqual(AppText.running.localized(in: .simplifiedChinese), "正在监听系统声音")
+        XCTAssertEqual(AppText.bandPreset(16).localized(in: .english), "16 bands")
+        XCTAssertEqual(AppText.bandPreset(16).localized(in: .simplifiedChinese), "16 段")
+    }
+
     func testSpectrumAnalyzerProducesStableFrameShape() throws {
         let analyzer = SpectrumAnalyzer(requestedSampleRate: 48_000, requestedBandCount: 12)
         let samples = (0..<512).map { index in
@@ -261,7 +278,7 @@ final class SoundVizTests: XCTestCase {
     func testCaptureFailureClassifierIdentifiesPermissionStatus() {
         let failure = CaptureFailure.classify(
             status: kAudioDevicePermissionsError,
-            action: "创建系统音频 Tap"
+            action: .createSystemAudioTap
         )
 
         XCTAssertEqual(failure.kind, .permissionRequired)
@@ -271,7 +288,7 @@ final class SoundVizTests: XCTestCase {
     func testCaptureFailureClassifierTreatsOtherStatusesAsRuntimeFailures() {
         let failure = CaptureFailure.classify(
             status: kAudioHardwareUnspecifiedError,
-            action: "创建私有聚合设备"
+            action: .createPrivateAggregateDevice
         )
 
         XCTAssertEqual(failure.kind, .runtime)
@@ -331,7 +348,7 @@ final class SoundVizTests: XCTestCase {
         controller.handleStartFailure(
             CaptureError.osStatus(
                 kAudioDevicePermissionsError,
-                "创建系统音频 Tap"
+                .createSystemAudioTap
             )
         )
 

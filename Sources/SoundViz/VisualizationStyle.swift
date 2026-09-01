@@ -8,11 +8,11 @@ enum VisualizationStyle: String, CaseIterable, Codable {
     var title: String {
         switch self {
         case .bars:
-            return "柱状频谱"
+            return AppText.spectrumBars.localized
         case .waveform:
-            return "波形线"
+            return AppText.waveformLine.localized
         case .spectrumArea:
-            return "频谱带"
+            return AppText.spectrumArea.localized
         }
     }
 }

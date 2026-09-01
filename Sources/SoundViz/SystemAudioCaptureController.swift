@@ -66,7 +66,8 @@ final class SystemAudioCaptureController: CaptureControlling {
                 .failed(
                     CaptureFailure(
                         kind: .runtime,
-                        message: "Core Audio Tap 需要 macOS 14.2 或更高版本。"
+                        status: kAudioHardwareUnspecifiedError,
+                        action: .readSystemAudio
                     )
                 )
             )
@@ -118,7 +119,7 @@ final class SystemAudioCaptureController: CaptureControlling {
         var tapID = AudioObjectID(0)
         let tapStatus = AudioHardwareCreateProcessTap(description, &tapID)
         guard tapStatus == noErr else {
-            throw CaptureError.osStatus(tapStatus, "创建系统音频 Tap")
+            throw CaptureError.osStatus(tapStatus, .createSystemAudioTap)
         }
         self.tapID = tapID
         let format = try tapFormat(tapID)
@@ -143,7 +144,7 @@ final class SystemAudioCaptureController: CaptureControlling {
             &aggregateDeviceID
         )
         guard aggregateStatus == noErr else {
-            throw CaptureError.osStatus(aggregateStatus, "创建私有聚合设备")
+            throw CaptureError.osStatus(aggregateStatus, .createPrivateAggregateDevice)
         }
         return aggregateDeviceID
     }
@@ -159,13 +160,13 @@ final class SystemAudioCaptureController: CaptureControlling {
             self?.process(inputData: inputData, timestamp: Date().timeIntervalSince1970)
         }
         guard createStatus == noErr, let ioProcID = createdProcID else {
-            throw CaptureError.osStatus(createStatus, "创建聚合设备 IOProc")
+            throw CaptureError.osStatus(createStatus, .createAggregateDeviceIOProc)
         }
         self.ioProcID = ioProcID
 
         let startStatus = AudioDeviceStart(deviceID, ioProcID)
         guard startStatus == noErr else {
-            throw CaptureError.osStatus(startStatus, "启动聚合设备 IOProc")
+            throw CaptureError.osStatus(startStatus, .startAggregateDeviceIOProc)
         }
     }
 
@@ -251,7 +252,7 @@ final class SystemAudioCaptureController: CaptureControlling {
             &format
         )
         guard status == noErr else {
-            throw CaptureError.osStatus(status, "查询 Tap 音频格式")
+            throw CaptureError.osStatus(status, .queryTapAudioFormat)
         }
         return format
     }
@@ -276,13 +277,13 @@ final class SystemAudioCaptureController: CaptureControlling {
 }
 
 enum CaptureError: LocalizedError {
-    case osStatus(OSStatus, String)
+    case osStatus(OSStatus, CaptureAction)
     case message(String)
 
     var errorDescription: String? {
         switch self {
         case .osStatus(let status, let action):
-            return "\(action)失败（\(status)）"
+            return CaptureFailure.classify(status: status, action: action).errorDescription
         case .message(let message):
             return message
         }

@@ -17,57 +17,57 @@ struct VisualizationSettingsView: View {
 
     var body: some View {
         Form {
-            Section("可视化") {
+            Section(AppText.visualizationSection.localized) {
                 MenuPicker(
-                    title: "样式",
+                    title: AppText.styleLabel.localized,
                     selection: bind(\.style),
                     options: VisualizationStyle.allCases.map { ($0, $0.title) }
                 )
 
                 MenuPicker(
-                    title: "频段",
+                    title: AppText.frequencyBandsLabel.localized,
                     selection: bind(\.bandPreset),
                     options: BandPreset.allCases.map { ($0, $0.title) },
                     disabled: model.settings.style == .waveform
                 )
 
                 if model.settings.style == .waveform {
-                    Text("频段设置仅影响频谱样式。")
+                    Text(AppText.frequencyBandsHelp.localized)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
 
-            Section("动态响应") {
+            Section(AppText.motionResponseSection.localized) {
                 MenuPicker(
-                    title: "预设",
+                    title: AppText.presetLabel.localized,
                     selection: bind(\.motionResponsePreset),
                     options: MotionResponsePreset.allCases.map { ($0, $0.title) }
                 )
             }
 
-            Section("节拍脉冲") {
+            Section(AppText.beatPulseSection.localized) {
                 MenuPicker(
-                    title: "强度",
+                    title: AppText.intensityLabel.localized,
                     selection: bind(\.beatPulseIntensity),
                     options: BeatPulseIntensity.allCases.map { ($0, $0.title) }
                 )
             }
 
-            Section("场景自适应") {
-                Toggle("根据音频调整动态", isOn: bind(\.sceneAdaptationEnabled))
+            Section(AppText.sceneAdaptationSection.localized) {
+                Toggle(AppText.audioAdaptiveMotionToggle.localized, isOn: bind(\.sceneAdaptationEnabled))
             }
 
-            Section("渲染频率") {
+            Section(AppText.renderingFrequencySection.localized) {
                 MenuPicker(
-                    title: "刷新率",
+                    title: AppText.refreshRateLabel.localized,
                     selection: bind(\.renderingCadence),
                     options: RenderingCadence.allCases.map { ($0, $0.title) }
                 )
             }
 
             Section {
-                Button("恢复默认设置", role: .destructive) {
+                Button(AppText.restoreDefaults.localized, role: .destructive) {
                     onRestoreDefaults()
                 }
             }

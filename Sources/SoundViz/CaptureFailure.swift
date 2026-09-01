@@ -9,19 +9,43 @@ enum CaptureFailureKind: Equatable {
 struct CaptureFailure: Equatable, LocalizedError {
     let kind: CaptureFailureKind
     let status: OSStatus?
-    let message: String
+    private let action: CaptureAction?
+    private let underlyingMessage: String?
 
     var errorDescription: String? {
         message
     }
 
-    init(kind: CaptureFailureKind, status: OSStatus? = nil, message: String) {
-        self.kind = kind
-        self.status = status
-        self.message = message
+    var message: String {
+        switch kind {
+        case .permissionRequired:
+            return AppText.capturePermissionRequired(action ?? .readSystemAudio).localized
+        case .runtime:
+            if let action, let status {
+                return AppText.captureRuntimeFailure(action: action, status: status).localized
+            }
+            return underlyingMessage ?? AppText.captureRuntimeFailure(
+                action: .readSystemAudio,
+                status: kAudioHardwareUnspecifiedError
+            ).localized
+        }
     }
 
-    init(error: Error, action: String = "读取系统音频") {
+    init(kind: CaptureFailureKind, status: OSStatus? = nil, message: String? = nil) {
+        self.kind = kind
+        self.status = status
+        self.action = nil
+        self.underlyingMessage = message
+    }
+
+    init(kind: CaptureFailureKind, status: OSStatus?, action: CaptureAction) {
+        self.kind = kind
+        self.status = status
+        self.action = action
+        self.underlyingMessage = nil
+    }
+
+    init(error: Error) {
         if let captureError = error as? CaptureError {
             self = captureError.failure
         } else {
@@ -29,19 +53,19 @@ struct CaptureFailure: Equatable, LocalizedError {
         }
     }
 
-    static func classify(status: OSStatus, action: String) -> CaptureFailure {
+    static func classify(status: OSStatus, action: CaptureAction) -> CaptureFailure {
         if status == kAudioDevicePermissionsError {
             return CaptureFailure(
                 kind: .permissionRequired,
                 status: status,
-                message: "\(action)需要音频捕获权限。"
+                action: action
             )
         }
 
         return CaptureFailure(
             kind: .runtime,
             status: status,
-            message: "\(action)失败（\(status)）。"
+            action: action
         )
     }
 }

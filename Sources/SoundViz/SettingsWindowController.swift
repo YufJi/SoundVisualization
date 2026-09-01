@@ -15,7 +15,7 @@ final class SettingsWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "SoundViz 设置"
+        window.title = AppText.settingsWindowTitle.localized
         window.contentView = contentView
         window.isReleasedWhenClosed = false
 

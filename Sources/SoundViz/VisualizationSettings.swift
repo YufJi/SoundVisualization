@@ -7,7 +7,7 @@ enum BandPreset: Int, CaseIterable, Codable {
     case twentyFour = 24
 
     var title: String {
-        "\(rawValue) 段"
+        AppText.bandPreset(rawValue).localized
     }
 
     var bandCount: Int {
@@ -24,11 +24,11 @@ enum MotionResponsePreset: String, CaseIterable, Codable {
     var title: String {
         switch self {
         case .snappy:
-            return "迅速"
+            return AppText.motionSnappy.localized
         case .balanced:
-            return "平衡"
+            return AppText.motionBalanced.localized
         case .smooth:
-            return "平滑"
+            return AppText.motionSmooth.localized
         }
     }
 
@@ -68,13 +68,13 @@ enum BeatPulseIntensity: String, CaseIterable, Codable {
     var title: String {
         switch self {
         case .off:
-            return "关闭"
+            return AppText.beatPulseOff.localized
         case .low:
-            return "低"
+            return AppText.beatPulseLow.localized
         case .normal:
-            return "正常"
+            return AppText.beatPulseNormal.localized
         case .high:
-            return "高"
+            return AppText.beatPulseHigh.localized
         }
     }
 
@@ -99,9 +99,9 @@ enum RenderingCadence: String, CaseIterable, Codable {
     var title: String {
         switch self {
         case .standard:
-            return "标准 30 fps"
+            return AppText.renderingCadenceStandard.localized
         case .high:
-            return "高 60 fps"
+            return AppText.renderingCadenceHigh.localized
         }
     }
 }

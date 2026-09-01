@@ -56,14 +56,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureMenu() {
         let menu = NSMenu()
-        let status = NSMenuItem(title: "正在准备…", action: nil, keyEquivalent: "")
+        let status = NSMenuItem(title: AppText.starting.localized, action: nil, keyEquivalent: "")
         let toggle = NSMenuItem(
-            title: "停止可视化",
+            title: AppText.stopVisualization.localized,
             action: #selector(toggleCapture),
             keyEquivalent: ""
         )
         toggle.target = self
-        let styleContainer = NSMenuItem(title: "可视化样式", action: nil, keyEquivalent: "")
+        let styleContainer = NSMenuItem(title: AppText.visualizationStyle.localized, action: nil, keyEquivalent: "")
         let styleMenu = NSMenu()
         styleMenuItems = VisualizationStyle.allCases.map { style in
             let item = NSMenuItem(
@@ -78,32 +78,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         styleContainer.submenu = styleMenu
         let settingsItem = NSMenuItem(
-            title: "设置…",
+            title: AppText.settings.localized,
             action: #selector(openSettings),
             keyEquivalent: ""
         )
         settingsItem.target = self
         let sceneAdaptationItem = NSMenuItem(
-            title: "根据音频调整动态",
+            title: AppText.audioAdaptiveMotion.localized,
             action: #selector(toggleSceneAdaptation),
             keyEquivalent: ""
         )
         sceneAdaptationItem.target = self
         let openSystemSettingsItem = NSMenuItem(
-            title: "打开音频捕获设置…",
+            title: AppText.openAudioCaptureSettings.localized,
             action: #selector(openAudioCaptureSettings),
             keyEquivalent: ""
         )
         openSystemSettingsItem.target = self
         openSystemSettingsItem.isHidden = true
         let retryCaptureItem = NSMenuItem(
-            title: "重试捕获",
+            title: AppText.retryCapture.localized,
             action: #selector(retryCapture),
             keyEquivalent: ""
         )
         retryCaptureItem.target = self
         retryCaptureItem.isHidden = true
-        let quit = NSMenuItem(title: "退出 SoundViz", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let quit = NSMenuItem(title: AppText.quitSoundViz.localized, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(status)
         menu.addItem(.separator())
         menu.addItem(styleContainer)
@@ -156,27 +156,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateStatus(_ state: CaptureState) {
         switch state {
         case .starting:
-            statusMenuItem?.title = "正在准备…"
+            statusMenuItem?.title = AppText.starting.localized
             toggleMenuItem?.isEnabled = false
             visualizer.setCaptureActive(false)
         case .running:
-            statusMenuItem?.title = "正在监听系统声音"
-            toggleMenuItem?.title = "停止可视化"
+            statusMenuItem?.title = AppText.running.localized
+            toggleMenuItem?.title = AppText.stopVisualization.localized
             toggleMenuItem?.isEnabled = true
             visualizer.setCaptureActive(true)
         case .permissionRequired:
-            statusMenuItem?.title = "需要在系统设置中授权音频捕获"
-            toggleMenuItem?.title = "开始可视化"
+            statusMenuItem?.title = AppText.permissionRequired.localized
+            toggleMenuItem?.title = AppText.startVisualization.localized
             toggleMenuItem?.isEnabled = true
             visualizer.setCaptureActive(false)
         case .failed(let failure):
-            statusMenuItem?.title = "捕获失败：\(failure.message)"
-            toggleMenuItem?.title = "重试"
+            statusMenuItem?.title = AppText.captureFailed(failure.message).localized
+            toggleMenuItem?.title = AppText.retry.localized
             toggleMenuItem?.isEnabled = true
             visualizer.setCaptureActive(false)
         case .stopped:
-            statusMenuItem?.title = "已停止"
-            toggleMenuItem?.title = "开始可视化"
+            statusMenuItem?.title = AppText.stopped.localized
+            toggleMenuItem?.title = AppText.startVisualization.localized
             toggleMenuItem?.isEnabled = true
             visualizer.setCaptureActive(false)
         }
