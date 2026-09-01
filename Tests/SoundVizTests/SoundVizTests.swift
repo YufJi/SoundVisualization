@@ -293,6 +293,49 @@ final class SoundVizTests: XCTestCase {
         XCTAssertEqual(visualizer.currentBeat, 0)
         XCTAssertEqual(visualizer.style, .spectrumArea)
         XCTAssertEqual(visualizer.bandCount, 16)
+        for band in visualizer.displayedBands {
+            XCTAssertEqual(band, 0.12, accuracy: 0.000001)
+        }
+    }
+
+    func testAudioVisualizerIgnoresSpectrumAfterCaptureStops() {
+        let visualizer = AudioVisualizer(style: .bars)
+        let spectrum = SpectrumFrame(
+            bands: [Float](repeating: 0.9, count: 12),
+            beat: 1,
+            waveform: [Float](repeating: 0.5, count: 32)
+        )
+
+        visualizer.setCaptureActive(false)
+        visualizer.push(spectrum: spectrum)
+
+        let queueDidRun = expectation(description: "Main queue processed stale spectrum")
+        DispatchQueue.main.async {
+            queueDidRun.fulfill()
+        }
+        wait(for: [queueDidRun], timeout: 1)
+
+        for band in visualizer.displayedBands {
+            XCTAssertEqual(band, 0.12, accuracy: 0.000001)
+        }
+        XCTAssertEqual(visualizer.targetBeat, 0)
+    }
+
+    func testCaptureControllerEmitsPermissionRequiredForPermissionFailure() {
+        var states: [CaptureState] = []
+        let controller = SystemAudioCaptureController(
+            onSpectrum: { _ in },
+            onStateChange: { states.append($0) }
+        )
+
+        controller.handleStartFailure(
+            CaptureError.osStatus(
+                kAudioDevicePermissionsError,
+                "创建系统音频 Tap"
+            )
+        )
+
+        XCTAssertEqual(states, [.permissionRequired])
     }
 
     func testReduceMotionSuppressesPulseWhilePreservingVisualization() {

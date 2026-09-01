@@ -9,6 +9,7 @@ final class AudioVisualizer {
     private(set) var beatPulseIntensity: BeatPulseIntensity
     private(set) var beatPulseScale: CGFloat
     private(set) var currentBeat: CGFloat = 0
+    private(set) var captureActive = false
     private let sceneAdapter = SceneAdapter()
     private(set) var motionState: VisualizationMotionState = .lowDistraction
     private(set) var reduceMotion = false
@@ -21,7 +22,7 @@ final class AudioVisualizer {
     private let renderScheduler: RenderScheduling
     private var scheduledFramesPerSecond: Int?
     private var targetBands: [Float]
-    private var displayedBands: [CGFloat]
+    private(set) var displayedBands: [CGFloat]
     private var targetWaveform: [Float]
     private var displayedWaveform: [CGFloat]
     private(set) var targetBeat: Float = 0
@@ -126,14 +127,22 @@ final class AudioVisualizer {
     }
 
     func enterAttenuatedBaseline() {
-        targetBands = [Float](repeating: 0, count: bandCount)
-        displayedBands = [CGFloat](repeating: 0, count: bandCount)
+        targetBands = [Float](repeating: 0.12, count: bandCount)
+        displayedBands = [CGFloat](repeating: 0.12, count: bandCount)
         targetWaveform = [Float](repeating: 0, count: waveformPointCount)
         displayedWaveform = [CGFloat](repeating: 0, count: waveformPointCount)
         targetBeat = 0
         displayedBeat = 0
         currentBeat = 0
+        captureActive = false
         render()
+    }
+
+    func setCaptureActive(_ active: Bool) {
+        captureActive = active
+        if !active {
+            enterAttenuatedBaseline()
+        }
     }
 
     func updateRenderingCadence(_ cadence: RenderingCadence) {
@@ -285,7 +294,7 @@ final class AudioVisualizer {
 
     func push(spectrum: SpectrumFrame) {
         DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
+            guard let self, self.captureActive else { return }
             self.applySpectrum(spectrum)
         }
     }

@@ -80,9 +80,20 @@ final class SystemAudioCaptureController: CaptureControlling {
             isRunning = true
             onStateChange(.running)
         } catch {
-            cleanup()
-            onStateChange(.failed(CaptureFailure(error: error)))
+            handleStartFailure(error)
         }
+    }
+
+    func handleStartFailure(_ error: Error) {
+        if #available(macOS 14.2, *) {
+            cleanup()
+        }
+        let failure = CaptureFailure(error: error)
+        onStateChange(
+            failure.kind == .permissionRequired
+                ? .permissionRequired
+                : .failed(failure)
+        )
     }
 
     func stop() {

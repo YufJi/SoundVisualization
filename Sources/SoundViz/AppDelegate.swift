@@ -158,26 +158,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .starting:
             statusMenuItem?.title = "正在准备…"
             toggleMenuItem?.isEnabled = false
+            visualizer.setCaptureActive(false)
         case .running:
             statusMenuItem?.title = "正在监听系统声音"
             toggleMenuItem?.title = "停止可视化"
             toggleMenuItem?.isEnabled = true
+            visualizer.setCaptureActive(true)
         case .permissionRequired:
             statusMenuItem?.title = "需要在系统设置中授权音频捕获"
-            toggleMenuItem?.title = "重新检查权限"
+            toggleMenuItem?.title = "开始可视化"
             toggleMenuItem?.isEnabled = true
+            visualizer.setCaptureActive(false)
         case .failed(let failure):
             statusMenuItem?.title = "捕获失败：\(failure.message)"
             toggleMenuItem?.title = "重试"
             toggleMenuItem?.isEnabled = true
+            visualizer.setCaptureActive(false)
         case .stopped:
             statusMenuItem?.title = "已停止"
             toggleMenuItem?.title = "开始可视化"
             toggleMenuItem?.isEnabled = true
-        }
-
-        if state == .stopped {
-            visualizer.enterAttenuatedBaseline()
+            visualizer.setCaptureActive(false)
         }
 
         refreshRecoveryMenu(for: state)
