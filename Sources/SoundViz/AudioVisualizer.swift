@@ -14,19 +14,25 @@ final class AudioVisualizer {
     private(set) var reduceMotion = false
     private(set) var prominenceScale: CGFloat = 1
     private var sceneAdaptationEnabled = true
+    private(set) var renderingCadence: RenderingCadence
+    private(set) var isLowPowerModeEnabled = false
+    private(set) var isRenderingCadenceCapped = true
+    private(set) var renderingFramesPerSecond = 15
+    private let renderScheduler: RenderScheduling
     private var targetBands: [Float]
     private var displayedBands: [CGFloat]
     private var targetWaveform: [Float]
     private var displayedWaveform: [CGFloat]
     private(set) var targetBeat: Float = 0
     private var displayedBeat: CGFloat = 0
-    private var renderTimer: Timer?
     var onUpdate: ((NSImage) -> Void)?
 
     init(
         style: VisualizationStyle,
         bandPreset: BandPreset = .twelve,
-        motionResponsePreset: MotionResponsePreset = .balanced
+        motionResponsePreset: MotionResponsePreset = .balanced,
+        renderingCadence: RenderingCadence = .standard,
+        renderScheduler: RenderScheduling = TimerRenderScheduler()
     ) {
         self.style = style
         bandCount = bandPreset.bandCount
@@ -34,19 +40,21 @@ final class AudioVisualizer {
         motionResponseParameters = motionResponsePreset.parameters
         beatPulseIntensity = .normal
         beatPulseScale = BeatPulseIntensity.normal.pulseScale
+        self.renderingCadence = renderingCadence
         targetBands = [Float](repeating: 0, count: bandCount)
         displayedBands = [CGFloat](repeating: 0, count: bandCount)
         targetWaveform = [Float](repeating: 0, count: waveformPointCount)
         displayedWaveform = [CGFloat](repeating: 0, count: waveformPointCount)
-        let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+        self.renderScheduler = renderScheduler
+        renderScheduler.schedule(
+            interval: 1.0 / Double(renderingFramesPerSecond)
+        ) { [weak self] in
             self?.render()
         }
-        RunLoop.main.add(timer, forMode: .common)
-        renderTimer = timer
     }
 
     deinit {
-        renderTimer?.invalidate()
+        renderScheduler.stop()
     }
 
     var image: NSImage {
@@ -101,6 +109,7 @@ final class AudioVisualizer {
             displayedBeat = 0
             currentBeat = 0
         }
+        refreshRenderingCadence()
     }
 
     func updateSceneAdaptation(_ enabled: Bool) {
@@ -112,6 +121,29 @@ final class AudioVisualizer {
             timestamp: Date().timeIntervalSince1970
         )
         prominenceScale = prominenceScale(for: motionState)
+        refreshRenderingCadence()
+    }
+
+    func updateRenderingCadence(_ cadence: RenderingCadence) {
+        renderingCadence = cadence
+        refreshRenderingCadence()
+    }
+
+    func updateLowPowerMode(_ enabled: Bool) {
+        isLowPowerModeEnabled = enabled
+        refreshRenderingCadence()
+    }
+
+    private func refreshRenderingCadence() {
+        isRenderingCadenceCapped = motionState == .lowDistraction || isLowPowerModeEnabled
+        renderingFramesPerSecond = isRenderingCadenceCapped
+            ? 15
+            : renderingCadence == .high ? 60 : 30
+        renderScheduler.schedule(
+            interval: 1.0 / Double(renderingFramesPerSecond)
+        ) { [weak self] in
+            self?.render()
+        }
     }
 
     private func prominenceScale(for state: VisualizationMotionState) -> CGFloat {
@@ -251,6 +283,7 @@ final class AudioVisualizer {
             timestamp: Date().timeIntervalSince1970
         )
         prominenceScale = prominenceScale(for: motionState)
+        refreshRenderingCadence()
 
         for index in 0..<bandCount where index < spectrum.bands.count {
             targetBands[index] = spectrum.bands[index]

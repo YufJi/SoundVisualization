@@ -45,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         )
         observeReduceMotion()
+        observeLowPowerMode()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -115,6 +116,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             self?.visualizer.updateReduceMotion(
                 NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            )
+        }
+    }
+
+    private func observeLowPowerMode() {
+        NotificationCenter.default.addObserver(
+            forName: .NSProcessInfoPowerStateDidChange,
+            object: ProcessInfo.processInfo,
+            queue: .main
+        ) { [weak self] _ in
+            self?.visualizer.updateLowPowerMode(
+                ProcessInfo.processInfo.isLowPowerModeEnabled
             )
         }
     }
@@ -193,6 +206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         captureController?.updateMotionResponse(newSettings.motionResponsePreset)
         visualizer.updateBeatPulseIntensity(newSettings.beatPulseIntensity)
         visualizer.updateSceneAdaptation(newSettings.sceneAdaptationEnabled)
+        visualizer.updateRenderingCadence(newSettings.renderingCadence)
         refreshStyleMenu()
         refreshSceneAdaptationMenu()
     }

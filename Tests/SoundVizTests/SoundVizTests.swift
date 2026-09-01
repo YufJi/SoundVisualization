@@ -276,6 +276,68 @@ final class SoundVizTests: XCTestCase {
         XCTAssertLessThan(visualizer.prominenceScale, 1)
     }
 
+    func testRenderingCadenceUsesManualSchedulerAndPowerCap() {
+        let scheduler = ManualRenderScheduler()
+        let visualizer = AudioVisualizer(
+            style: .bars,
+            renderingCadence: .high,
+            renderScheduler: scheduler
+        )
+
+        XCTAssertEqual(visualizer.renderingCadence, .high)
+        XCTAssertEqual(visualizer.isRenderingCadenceCapped, true)
+        XCTAssertEqual(visualizer.renderingFramesPerSecond, 15)
+        XCTAssertEqual(scheduler.interval, 1.0 / 15.0, accuracy: 0.000001)
+
+        visualizer.applySpectrum(
+            SpectrumFrame(
+                bands: [Float](repeating: 0.9, count: 12),
+                beat: 0,
+                waveform: [Float](repeating: 0, count: 32)
+            )
+        )
+        XCTAssertEqual(visualizer.motionState, .active)
+        XCTAssertEqual(visualizer.isRenderingCadenceCapped, false)
+        XCTAssertEqual(visualizer.renderingFramesPerSecond, 60)
+        XCTAssertEqual(scheduler.interval, 1.0 / 60.0, accuracy: 0.000001)
+
+        visualizer.updateLowPowerMode(true)
+        XCTAssertEqual(visualizer.isLowPowerModeEnabled, true)
+        XCTAssertEqual(visualizer.renderingCadence, .high)
+        XCTAssertEqual(visualizer.isRenderingCadenceCapped, true)
+        XCTAssertEqual(visualizer.renderingFramesPerSecond, 15)
+        XCTAssertEqual(scheduler.interval, 1.0 / 15.0, accuracy: 0.000001)
+
+        visualizer.updateRenderingCadence(.standard)
+        XCTAssertEqual(visualizer.renderingCadence, .standard)
+        XCTAssertEqual(visualizer.renderingFramesPerSecond, 15)
+
+        visualizer.updateLowPowerMode(false)
+        visualizer.applySpectrum(
+            SpectrumFrame(
+                bands: [Float](repeating: 0.9, count: 12),
+                beat: 0,
+                waveform: [Float](repeating: 0, count: 32)
+            )
+        )
+        XCTAssertEqual(visualizer.renderingFramesPerSecond, 30)
+        XCTAssertEqual(scheduler.interval, 1.0 / 30.0, accuracy: 0.000001)
+    }
+
+    final class ManualRenderScheduler: RenderScheduling {
+        private(set) var interval: TimeInterval = 0
+        private(set) var scheduleCount = 0
+
+        func schedule(interval: TimeInterval, handler: @escaping () -> Void) {
+            self.interval = interval
+            scheduleCount += 1
+        }
+
+        func stop() {
+            interval = 0
+        }
+    }
+
     func testMotionResponsePresetsHaveDistinctParameters() {
         let presets = MotionResponsePreset.allCases
         let parameters = presets.map(\.parameters)

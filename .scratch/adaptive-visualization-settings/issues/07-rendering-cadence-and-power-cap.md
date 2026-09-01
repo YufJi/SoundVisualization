@@ -4,13 +4,17 @@
 
 **Blocked by:** 01 — Visualization settings model and persistence; 02 — SwiftUI settings window.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Standard cadence renders at 30 fps.
-- [ ] High cadence renders at up to 60 fps when enabled.
-- [ ] Low-distraction Baseline caps rendering at 15 fps.
-- [ ] macOS Low Power Mode caps rendering at 15 fps.
-- [ ] The user's Standard or High preference is retained while the cap is active.
-- [ ] Changing cadence applies immediately without restarting Listening.
-- [ ] Cadence changes do not alter audio capture or analysis policy.
-- [ ] Scheduler behavior is covered by deterministic tests or a documented manual verification path.
+- [x] Standard cadence renders at 30 fps.
+- [x] High cadence renders at up to 60 fps when enabled.
+- [x] Low-distraction Baseline caps rendering at 15 fps.
+- [x] macOS Low Power Mode caps rendering at 15 fps.
+- [x] The user's Standard or High preference is retained while the cap is active.
+- [x] Changing cadence applies immediately without restarting Listening.
+- [x] Cadence changes do not alter audio capture or analysis policy.
+- [x] Scheduler behavior is covered by deterministic tests or a documented manual verification path.
+
+## Answer
+
+Implemented with an injectable rendering scheduler, immediate Standard/High cadence changes, system Low Power Mode observation, and a 15 fps cap during Low-distraction Baseline or Low Power Mode.
