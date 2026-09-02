@@ -34,13 +34,8 @@ struct CaptureFailure: Equatable, LocalizedError {
     static func unsupportedMacOS() -> CaptureFailure {
         CaptureFailure(
             kind: .runtime,
-            underlyingMessage: AppText.unsupportedMacOS.localized
+            message: AppText.unsupportedMacOS.localized
         )
-    }
-                action: .readSystemAudio,
-                status: kAudioHardwareUnspecifiedError
-            ).localized
-        }
     }
 
     init(kind: CaptureFailureKind, status: OSStatus? = nil, message: String? = nil) {
